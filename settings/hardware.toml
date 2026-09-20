@@ -1,0 +1,68 @@
+# vivapinata - hardware / rendering settings
+#
+# Primary SDK config (paths.config_path in src/vivapinata_app.h). Flat
+# key = value only - a [Section] header makes the SDK loader skip the keys.
+# Precedence: --flag (CLI) > REX_FLAG (env) > this file > compiled default.
+# The in-game Settings overlay (F4) "Save to config" rewrites this file.
+#
+# Retro standard (KB ROOT_INDEX.rules.retro_standards): native 720p, no
+# supersampling, ROV render-target path + readback resolve, MSAA off,
+# XInput. Viva Pinata is a 30 FPS title - no fps unlock by default.
+
+gpu_plugin = "xenos"
+graphics_backend = "any"
+vsync = true
+
+resolution_scale = 1
+async_shader_compilation = true
+native_2x_msaa = false
+anisotropic_override = 1
+
+texture_cache_memory_limit_soft = 1024
+texture_cache_memory_limit_hard = 4096
+clear_memory_page_state = true
+readback_memexport = true
+readback_memexport_fast = true
+host_present_from_non_ui_thread = true
+
+window_width = 1280
+window_height = 720
+fullscreen = false
+monitor = 0
+resolution = "1280x720"
+
+render_target_path_d3d12 = "rov"
+d3d12_readback_resolve = true
+gamma_render_target_as_unorm16 = true
+
+store_shaders = true
+present_letterbox = true
+
+d3d12_adapter = -1
+d3d12_allow_variable_refresh_rate_and_tearing = true
+d3d12_bindless = true
+d3d12_break_on_error = false
+d3d12_break_on_warning = false
+d3d12_debug = false
+d3d12_pipeline_creation_threads = 8
+d3d12_queue_priority = 2
+d3d12_submit_on_primary_buffer_end = true
+
+render_target_path_vulkan = "fbo"
+vulkan_allow_present_mode_immediate = true
+
+headless = false
+log_level = "info"
+gpu_allow_invalid_fetch_constants = true
+
+# Project cvars (src/game_cvars.h)
+vp_fps_unlock = false
+vp_skip_intro_videos = false
+vp_high_res_timer = true
+
+# DISCOVERY MODE (temporary, bring-up phase): arm the stub sweep so calls into
+# unregistered functions are logged to <exe_dir>/logs/stub_sweep.txt and the
+# game continues instead of dying on the first one. Convert the hits with
+#   python tools/stub_sweep_to_toml.py
+# and set this back to false once the game runs without new hits.
+dev_debug_runtime = true

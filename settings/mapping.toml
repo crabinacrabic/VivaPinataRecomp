@@ -1,0 +1,50 @@
+# vivapinata - input mapping settings
+#
+# Loaded next to hardware.toml by utils::LoadSettingsFiles (both passes).
+# Flat key = value only. --flag / REX_FLAG always win over this file.
+#
+# Viva Pinata is played entirely with the gamepad (cursor on the left stick,
+# shovel/pinata actions on face buttons). Keyboard+mouse emulation is merged
+# in alongside any physical pad; mnk_mouse maps the mouse to the right stick
+# (camera). TiP-Recomp went further with a raw-mouse cursor driver
+# (CursorHooks) - a later phase here.
+
+# "sdl", "xinput" or "nop". OnPreSetup forces "xinput" before this file is
+# read on the first pass; set it here to override.
+input_backend = "xinput"
+
+# Extra SDL gamepad mappings (file staged next to the exe by CMakeLists.txt).
+hid_mappings_file = "gamecontrollerdb.txt"
+
+guide_button = true
+
+mnk_mode = true
+mnk_mouse = true
+mnk_sensitivity = 1.0
+
+# Keyboard bindings (comma-separated keys, optional Shift+/Ctrl+/Alt+)
+keybind_a = "Space,Semicolon"
+keybind_b = "Backspace,Quote"
+keybind_x = "L"
+keybind_y = "P"
+keybind_left_trigger = "Q"
+keybind_right_trigger = "E"
+keybind_left_shoulder = "1"
+keybind_right_shoulder = "3"
+keybind_lstick_up = "W"
+keybind_lstick_down = "S"
+keybind_lstick_left = "A"
+keybind_lstick_right = "D"
+keybind_lstick_press = "F"
+keybind_rstick_up = "Up"
+keybind_rstick_down = "Down"
+keybind_rstick_left = "Left"
+keybind_rstick_right = "Right"
+keybind_rstick_press = "K"
+keybind_dpad_up = "Shift+Up"
+keybind_dpad_down = "Shift+Down"
+keybind_dpad_left = "Shift+Left"
+keybind_dpad_right = "Shift+Right"
+keybind_back = "Tab"
+keybind_start = "Return"
+keybind_guide = ""

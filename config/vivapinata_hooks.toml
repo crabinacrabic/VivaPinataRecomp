@@ -1,0 +1,32 @@
+# vivapinata_hooks.toml - named guest functions (hook targets)
+#
+# Included from vivapinata_manifest.toml.
+#
+# Giving a function a `name` makes codegen emit `rex_<name>` instead of
+# `sub_82XXXXXX`, so the C++ override in src/game_fixes.h reads by intent:
+#
+#   0x82XXXXXX = { name = "rex_appMainDraw_82XXXXXX" }
+#   REX_HOOK_RAW(rex_appMainDraw_82XXXXXX) { ... __imp__rex_appMainDraw_82XXXXXX(ctx, base); }
+#
+# Convention (from TiP-Recomp): rex_<subsystem><Function>_<address>. Keep the
+# address suffix - two titles from the same studio share function names but
+# never addresses, and the suffix makes grep across projects unambiguous.
+#
+# IMPORTANT: every address in TiP-Recomp's retip_hooks.toml belongs to the
+# 2008 sequel XEX. None of them are valid here. Viva Pinata (2006) has no
+# public symbols; names must be recovered from strings/xrefs (Ghidra with
+# tomcl7/ghidra-fidb-xenonsdk for the XDK 2.0.3529 static libs) after the
+# first codegen.
+#
+# Renaming a function changes the generated symbol -> all existing overrides
+# for it must be renamed too, and codegen re-runs (build regenerates).
+
+[functions]
+# --- first codegen: empty ---
+
+# Candidates to identify first (same order TiP-Recomp needed them):
+#   appMainDraw / appMainTickPreDraw      -> FPS / vsync control
+#   camMainGetAspectRatio                 -> widescreen fix
+#   XUsbcam* thunks (XAM, Xbox Live Vision camera) -> stub to 0
+#   assetManOpen / meLoadAsset            -> asset loading diagnostics
+#   Sleep_XAPI (XAPILIB 2.0.3529)         -> hybrid sleep (SleepHooks port)

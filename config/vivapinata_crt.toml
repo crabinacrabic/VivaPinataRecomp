@@ -1,0 +1,43 @@
+# vivapinata_crt.toml - native CRT offloading ([rexcrt])
+#
+# Included from vivapinata_manifest.toml.
+#
+# `[rexcrt] Name = 0xADDR` renames the graph node to rexcrt_<Name>, does NOT
+# recompile its body, and the SDK links its native implementation
+# (rexglue-sdk kernel/crt/{memory,string,file,heap,threading}.cpp).
+#
+# Names the SDK 0.10 validator accepts (see KB CROSS_INSPECTION_AO2.md 3.2):
+#   memory : memcpy memmove memset memchr XMemCpy XMemSet XMemSet128 memset_vmx memcpy_s memmove_s
+#   string : strncmp strncpy strchr strstr strrchr strtok _stricmp strcpy_s lstrlenA lstrcpyA
+#            lstrcpynA lstrcatA lstrcmpiA wcslen wcscmp wcsncmp wcscoll wcschr wcsrchr wcscpy
+#            wcsncpy wcsncpy_s wcsstr
+#   file   : CreateFileA ReadFile WriteFile SetFilePointer GetFileSize GetFileSizeEx SetEndOfFile
+#            FlushFileBuffers DeleteFileA CloseHandle FindFirstFileA FindNextFileA FindClose
+#            CreateDirectoryA MoveFileA SetFileAttributesA GetFileAttributesA GetFileAttributesExA
+#            SetFilePointerEx SetFileTime CompareFileTime CopyFileA RemoveDirectoryA GetFileType
+#   fibers : ConvertThreadToFiber ConvertFiberToThread CreateFiber DeleteFiber SwitchToFiber
+#   heap   : RtlAllocateHeap RtlFreeHeap RtlSizeHeap RtlReAllocateHeap   (ALL FOUR or none)
+#
+# Rollout order (proven on AO2 / TiP): first codegen with NOTHING here ->
+# memcpy/memset (zero risk) -> file I/O -> heap group last (TiP needed the
+# heap offloaded to stop hangs; on AO2 the guest RtlAllocateHeap spun in
+# 4 infinite loops). Every address below must be re-derived for THIS XEX:
+# the TiP-Recomp values (RtlAllocateHeap = 0x82B089F0 etc.) are sequel
+# addresses and will corrupt codegen if pasted here.
+#
+# How to find them after the first codegen (XAPILIB 2.0.3529 is static):
+#   memcpy  : most-called leaf with `dcbt`/`dcbz` + 16-byte copy loop, ~1000+ call sites
+#   memset  : `rlwimi r4,r4,8,16,23` byte-splat prologue
+#   XMemCpy : VMX (`lvx`/`stvx`) copy, `cmplwi cr6,r5,16` fast-path check
+#   Rtl*Heap: called right after GetProcessHeap() (returns a global HANDLE)
+
+[rexcrt]
+# --- first codegen: empty ---
+#memcpy  = 0x00000000
+#memset  = 0x00000000
+#XMemCpy = 0x00000000
+
+#RtlAllocateHeap   = 0x00000000
+#RtlFreeHeap       = 0x00000000
+#RtlSizeHeap       = 0x00000000
+#RtlReAllocateHeap = 0x00000000

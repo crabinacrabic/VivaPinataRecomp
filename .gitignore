@@ -1,0 +1,21 @@
+# game dump (5.2 GB) - never commit; keep only the notes
+game_files/*
+!game_files/README.md
+# codegen output is rebuilt by Visual Studio; only the SDK glue is tracked
+generated/*
+!generated/rexglue.cmake
+# build trees
+out/*
+build/*
+# SDK is fetched by cmake/fetch-rexglue-sdk.cmake
+rexglue/*
+!rexglue/README.md
+# logs, IDE state, disc images
+*.log
+.vs/
+.vscode/
+*.iso
+*.7z
+*.zip
+BONUS/
+Vimm's Lair.txt

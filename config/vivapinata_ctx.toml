@@ -1,0 +1,32 @@
+# vivapinata_ctx.toml - codegen register localization and analysis tuning
+#
+# Included from vivapinata_manifest.toml. Keys per rex/codegen/config.h.
+#
+# FIRST CODEGEN POLICY: everything at SDK defaults (all false). This is the
+# configuration that produced 0 validation errors on Army of Two and is the
+# safest baseline for a brand-new title.
+#
+# TiP-Recomp (Viva Pinata: Trouble in Paradise, SDK 0.8.1) enables the flags
+# below for speed - and pays for it with a 30-entry "#CTX.CTR.U32" function
+# list of crash fixes, because localized CTR/CR/LR break functions that
+# receive those registers from a caller (SEH funclets, computed jumps).
+# Enable them ONE AT A TIME only after the game reaches the garden with
+# defaults, and re-run the full smoke test after each.
+
+skip_lr = false
+skip_msr = false
+ctr_as_local = false
+xer_as_local = false
+cr_as_local = false
+reserved_as_local = false
+non_argument_as_local = false
+non_volatile_as_local = false
+generate_exception_handlers = false
+
+[analysis]
+# Defaults from RecompilerConfig. Raise max_jump_extension if a large
+# switch-heavy function (Rare's script/tick dispatchers) gets truncated.
+max_jump_extension = 65536
+data_region_threshold = 16
+large_function_threshold = 1048576
+#exception_handler_funcs = []

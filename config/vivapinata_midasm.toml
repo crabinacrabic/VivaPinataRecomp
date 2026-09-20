@@ -1,0 +1,30 @@
+# vivapinata_midasm.toml - instruction-level (mid-asm) hooks
+#
+# Included from vivapinata_manifest.toml. Schema per rex/codegen/config.h
+# (MidAsmHook) and verified against SDK 0.10 config.cpp:
+#
+#   [[midasm_hook]]
+#   address           = 0x82XXXXXX      # instruction address inside a recompiled function
+#   name              = "my_hook"       # host symbol: extern "C"-less C++ function
+#   registers         = ["r3", "f1"]    # rN, fN, crN, ctr, xer, fpscr, vN -> passed by reference
+#   after_instruction = true            # false = before the instruction executes
+#   # exactly one of the following outcome groups:
+#   return                = true        # `void name(...)`; return from the function
+#   return_on_true        = true        # `bool name(...)`; return when hook yields true
+#   return_on_false       = true
+#   jump_address          = 0x82XXXXXX  # `void name(...)`; unconditional goto
+#   jump_address_on_true  = 0x82XXXXXX  # `bool name(...)`; conditional goto
+#   jump_address_on_false = 0x82XXXXXX
+#
+# Host side (src/game_fixes.h):
+#   bool my_hook() { return true; }                 # for *_on_true / *_on_false
+#   void my_hook(PPCRegister& r3) { r3.u32 = 1; }   # registers arrive as PPCRegister&
+#
+# Array-of-tables entries are deduplicated by `address` across includes.
+#
+# TiP-Recomp uses this mechanism for: CPU/GPU fps hooks, vsync interval
+# (`vsync_hook` on r10), skipSecondDraw/skipFirstDraw, skiplighting,
+# AspectRatio_hook (r3), SkipIntroVideos. All of those addresses are sequel
+# addresses and must be re-derived for this XEX.
+
+# --- first codegen: no hooks ---

@@ -1,0 +1,9 @@
+{
+  "mcpServers": {
+    "vsdbg": {
+      "type": "stdio",
+      "command": "C:\\Users\\MSI\\AppData\\Local\\vsdbgmcp\\bin\\vsdbgmcp.exe",
+      "args": ["--cwd", "C:\\Recompiles\\VivaPinata_xbox360"]
+    }
+  }
+}
