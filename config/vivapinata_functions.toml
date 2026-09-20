@@ -90,3 +90,10 @@
 # sub_82527C90 ends exactly at 0x82527D18; 16-byte gap before sub_82527D28 (which is a
 # `lis/ori/blr` constant getter) -> another tiny virtual method of an undiscovered vtable.
 0x82527D18 = {}
+
+# --- run #6 (Ctrl+F5, stub sweep): Garden Select UI & garden initialization ---
+# Intercepted during menu navigation and garden confirmation:
+0x824B6AA8 = {}   # LR=0x824B3000 (recomp.52.cpp: UI element / descriptor setup)
+0x823BE220 = {}   # LR=0x823BE424
+0x8217BB50 = {}   # LR=0x8217C3AC (recomp.39.cpp)
+0x823B13F8 = {}   # LR=0x823B0A8C (recomp.62.cpp: sub_823B09A8 garden initialization callback)

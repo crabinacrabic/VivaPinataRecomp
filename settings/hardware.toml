@@ -10,8 +10,11 @@
 # XInput. Viva Pinata is a 30 FPS title - no fps unlock by default.
 
 gpu_plugin = "xenos"
-graphics_backend = "any"
+graphics_backend = "d3d12"
 vsync = true
+
+scribble_heap = true
+protect_zero = false
 
 resolution_scale = 1
 async_shader_compilation = true
@@ -20,7 +23,7 @@ anisotropic_override = 1
 
 texture_cache_memory_limit_soft = 1024
 texture_cache_memory_limit_hard = 4096
-clear_memory_page_state = true
+clear_memory_page_state = false
 readback_memexport = true
 readback_memexport_fast = true
 host_present_from_non_ui_thread = true
@@ -32,6 +35,7 @@ monitor = 0
 resolution = "1280x720"
 
 render_target_path_d3d12 = "rov"
+readback_resolve = "full"
 d3d12_readback_resolve = true
 gamma_render_target_as_unorm16 = true
 
@@ -65,4 +69,4 @@ vp_high_res_timer = true
 # game continues instead of dying on the first one. Convert the hits with
 #   python tools/stub_sweep_to_toml.py
 # and set this back to false once the game runs without new hits.
-dev_debug_runtime = true
+dev_debug_runtime = false
