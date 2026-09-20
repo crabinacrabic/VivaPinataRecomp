@@ -104,6 +104,88 @@ namespace debug_tools
     }
   }
 
+  // Data-pointer scan (runtime equivalent of the community "scan_data_pointers"
+  // codegen flag): walk the loaded, decrypted image outside the code range and
+  // collect big-endian words that point into the code range. Vtables are runs
+  // of such words, so every entry is reported with the length of the run it
+  // belongs to and whether the dispatcher already knows the target. Targets
+  // with no registered function are the methods of vtables the codegen
+  // scanner never found (the source of every "unregistered function" so far).
+  // Must run BEFORE PerformStubSweep, which registers a stub everywhere.
+  // Post-process with tools/data_pointers_to_toml.py (it drops interiors of
+  // known functions using the generated code, so this stays simple).
+  static void PerformDataPointerScan()
+  {
+    auto *rt = rex::Runtime::instance();
+    auto *fd = rt ? rt->function_dispatcher() : nullptr;
+    uint8_t *base = rt ? rt->virtual_membase() : nullptr;
+    if (!fd || !base)
+    {
+      return;
+    }
+
+    FILE *log = OpenLog("data_pointers.txt");
+    if (!log)
+    {
+      return;
+    }
+
+    auto in_code = [](uint32_t v)
+    {
+      return v >= GameConstants::kCodeBase && v < GameConstants::kCodeEnd && (v & 3) == 0;
+    };
+    auto load_be32 = [base](uint32_t ea)
+    {
+      const uint8_t *p = base + ea;
+      return (uint32_t(p[0]) << 24) | (uint32_t(p[1]) << 16) | (uint32_t(p[2]) << 8) | uint32_t(p[3]);
+    };
+
+    const uint32_t ranges[2][2] = {
+        {GameConstants::kImageBase, GameConstants::kCodeBase},
+        {GameConstants::kCodeEnd & ~3u, GameConstants::kImageEnd},
+    };
+
+    uint32_t words = 0, runs = 0, unknown = 0;
+    for (const auto &r : ranges)
+    {
+      uint32_t ea = r[0];
+      while (ea + 4 <= r[1])
+      {
+        if (!in_code(load_be32(ea)))
+        {
+          ea += 4;
+          continue;
+        }
+        // Measure the run of consecutive code pointers starting here.
+        uint32_t end = ea;
+        while (end + 4 <= r[1] && in_code(load_be32(end)))
+        {
+          end += 4;
+        }
+        const uint32_t run = (end - ea) / 4;
+        ++runs;
+        for (uint32_t p = ea; p < end; p += 4)
+        {
+          const uint32_t v = load_be32(p);
+          const bool known = fd->GetFunction(v) != nullptr;
+          ++words;
+          if (!known)
+          {
+            ++unknown;
+          }
+          std::fprintf(log, "[ptr] at=0x%08X value=0x%08X run=%u idx=%u %s\n", p, v, run,
+                       (p - ea) / 4, known ? "known" : "UNKNOWN");
+        }
+        ea = end;
+      }
+    }
+    std::fprintf(log, "=== data pointer scan: %u code pointers in %u runs, %u unknown targets ===\n",
+                 words, runs, unknown);
+    std::fclose(log);
+    REXLOG_INFO("debug_tools: data pointer scan: {} code pointers in {} runs, {} unknown targets",
+                words, runs, unknown);
+  }
+
   // Static view: every code address without a registered function. Large
   // (most addresses are function interiors); mainly useful for diffing runs.
   static void PerformMissingFunctionScan()

@@ -80,6 +80,11 @@
 0x8267B460 = {}
 0x8267B478 = {}
 
+# --- run #4 (Ctrl+F5, stub sweep): starting the intro movie ---
+# vtable[0] call from sub_821A1F48 (LR=0x821A1F9C, recomp.62.cpp). sub_82128610 ends
+# exactly at 0x82128958; 40-byte method before sub_82128980 (`li r3,1; blr`).
+0x82128958 = {}
+
 # --- run #2 (F5): FATAL unregistered function 0x82527D18 ---
 # vtable[0] call (`lwz r11,0(r28); mtctr; bctrl`) from sub_8252E0C8 (recomp.7.cpp:26578).
 # sub_82527C90 ends exactly at 0x82527D18; 16-byte gap before sub_82527D28 (which is a

@@ -119,9 +119,11 @@ public:
 
     if (REXCVAR_GET(dev_debug_runtime))
     {
-      // Discovery mode: log every call into an unregistered address instead
-      // of dying on the first one. (PerformMissingFunctionScan is available
+      // Discovery mode. Order matters: the pointer scan asks the dispatcher
+      // which targets are registered, the sweep then registers a stub on
+      // every remaining address. (PerformMissingFunctionScan is available
       // too but dumps ~1.5M interior addresses - not useful by default.)
+      debug_tools::PerformDataPointerScan();
       debug_tools::PerformStubSweep();
     }
   }
