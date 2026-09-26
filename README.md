@@ -4,244 +4,157 @@
 
 # Viva Piñata Recomp
 
-**Статическая рекомпиляция Viva Piñata (Xbox 360, 2006) в нативную программу для Windows**
+**Viva Piñata (Xbox 360, 2006) running natively on Windows PC**
 
-[![Platform](https://img.shields.io/badge/platform-Windows%20x64-0078D6?logo=windows&logoColor=white)](#требования)
-[![Title ID](https://img.shields.io/badge/Title%20ID-4D5307F2-107C10?logo=xbox&logoColor=white)](docs/XEX_ANALYSIS.md)
+**English** · [Русский](README.ru.md)
+
+[![Platform](https://img.shields.io/badge/platform-Windows%20x64-0078D6?logo=windows&logoColor=white)](#what-you-need)
+[![Title ID](https://img.shields.io/badge/Title%20ID-4D5307F2-107C10?logo=xbox&logoColor=white)](#which-game-version-you-need)
 [![ReXGlue SDK](https://img.shields.io/badge/ReXGlue%20SDK-v0.10.0.8-8A2BE2)](https://github.com/rexglue/rexglue-sdk)
-[![Renderer](https://img.shields.io/badge/render-Direct3D%2012-blue)](#настройки)
-[![C++23](https://img.shields.io/badge/C%2B%2B-23-00599C?logo=cplusplus&logoColor=white)](CMakeLists.txt)
-[![Status](https://img.shields.io/badge/status-playable-2ea44f)](#статус)
+[![Renderer](https://img.shields.io/badge/render-Direct3D%2012-blue)](#settings)
+[![Status](https://img.shields.io/badge/status-playable-2ea44f)](#what-works)
+[![Languages](https://img.shields.io/badge/text-English%20%7C%20Русский-orange)](#russian-language)
 
-<img src="docs/images/title_screen.jpg" width="49%" alt="Титульный экран"> <img src="docs/images/garden.jpg" width="49%" alt="Сад">
+<img src="docs/images/title_screen.jpg" width="49%" alt="Title screen"> <img src="docs/images/garden.jpg" width="49%" alt="Garden">
 
 </div>
 
 ---
 
-## О проекте
+## What is this?
 
-Это не эмулятор. Код игры для процессора Xbox 360 (PowerPC, Xenon) переведён в C++ с помощью [ReXGlue SDK](https://github.com/rexglue/rexglue-sdk) и собран как обычная 64-битная программа для Windows. Процессорный код выполняется напрямую, а графику Xenos отрисовывает бэкенд Direct3D 12, унаследованный от Xenia.
-
-Файлы игры в репозиторий не входят. Для запуска нужна собственная копия игры.
-
-| | |
-| :-- | :-- |
-| **Игра** | Viva Piñata (USA, Europe), Rare / Microsoft, 2006 |
-| **Title ID** | `4D5307F2` |
-| **XEX** | `default.xex`, XDK 2.0.3529, образ `0x82000000..0x82B90000` |
-| **Рекомпилировано** | 19 714 функций в 99 файлах C++ |
-| **SDK** | ReXGlue v0.10.0.8-dev.g1406e1b |
-| **Сборка** | Visual Studio 2026, Clang (ClangCL), C++23, CMake + Ninja |
-
-Подробный разбор XEX: [docs/XEX_ANALYSIS.md](docs/XEX_ANALYSIS.md).
-
-## Статус
-
-| | |
-| :-- | :-- |
-| ✅ | Запуск, меню, титульный экран |
-| ✅ | Сад и игровой процесс, земля и трава отрисовываются так же, как в Xenia Canary |
-| ✅ | Звук, геймпад XInput |
-| ✅ | Лаунчер на русском: проверка версии игры, настройки графики, кнопка «Играть» |
-| ✅ | Русский язык: перевод ПК-версии от ZoG Team, перенесённый на Xbox 360 (см. [Русский язык](#русский-язык)) |
-| 🚧 | Пропуск вступительных роликов и снятие ограничения 30 FPS: настройки `vp_skip_intro_videos` и `vp_fps_unlock` заведены, хуков пока нет |
-| 🚧 | Только Direct3D 12: в готовой сборке SDK Vulkan выключен |
-
-## Главные исправления
-
-| Проблема | Причина | Решение |
-| :-- | :-- | :-- |
-| **Белая земля** на титульном экране и в саду | Ошибка генератора кода ReXGlue: `vpkd3d128` (упаковка float → float16), если регистр назначения совпадает с источником, читает знак из уже затёртого места. Все отрицательные координаты сетки ландшафта становились положительными, и 3/4 сада не рисовались | 30 mid-asm хуков с правильной упаковкой: [`src/game_fixes.h`](src/game_fixes.h), [`config/vivapinata_midasm.toml`](config/vivapinata_midasm.toml). Ошибка передана авторам SDK |
-| **Вылеты** `Call to invalid or unregistered function` | Сканер SDK не находит методы, доступные только через таблицы виртуальных функций (adjustor thunks, маленькие геттеры) | Границы функций вручную в [`config/vivapinata_functions.toml`](config/vivapinata_functions.toml), поиск: [`tools/find_thunk_holes.py`](tools/find_thunk_holes.py) |
-
-## Требования
-
-- Windows 10 или 11, x64
-- Видеокарта с поддержкой Direct3D 12 (проверено на AMD Radeon RX 6600)
-- [Visual Studio 2026](https://visualstudio.microsoft.com/) с нагрузкой «Разработка классических приложений на C++» и компонентом **C++ Clang tools for Windows**; CMake и Ninja входят в Visual Studio
-- Своя копия **Viva Piñata (USA, Europe)** для Xbox 360, образ диска (точная версия ниже, в разделе [Какая версия игры нужна](#какая-версия-игры-нужна)), и [extract-xiso](https://github.com/XboxDev/extract-xiso)
-- Python 3, только для вспомогательных скриптов из `tools/`
-
-## Какая версия игры нужна
-
-Проект собран и проверен **только** на этой версии диска:
-
-| | |
-| :-- | :-- |
-| **Диск (Redump)** | `Viva Pinata (USA, Europe) (En,Ja,Fr,De,Es,It,Nl,Pt,Sv,No,Zh,Ko,Pl,Cs,Hu,Sk)` |
-| **Title ID** | `4D5307F2` |
-| **Media ID** | `690B3287` |
-| **Версия** | `0.0.0.1`, оригинальный диск; обновление (title update) не нужно |
-| **ISO** | CRC32 `f3ddf9d3`, MD5 `3902321dfe15d7d2510a96114dba625a` |
-| **`default.xex`** | SHA-1 `130dbbe05328eeca23ab830bc8ed3337064eddd3` |
-
-Проверить распакованный `default.xex` можно встроенной командой Windows:
-
-```bash
-certutil -hashfile game_files\default.xex SHA1
-```
+The original Xbox 360 game, converted into a normal Windows program. It is **not an emulator**: the game's code was translated to C++ with [ReXGlue SDK](https://github.com/rexglue/rexglue-sdk) ("static recompilation"). The game has a launcher and can optionally use a Russian translation.
 
 > [!IMPORTANT]
-> Рекомпилированный код привязан к адресам именно этого `default.xex`. Другие издания (переиздания, цифровая версия Games on Demand) не проверялись и, скорее всего, не запустятся.
->
-> Это другие игры, они не подойдут: **Viva Piñata: Trouble in Paradise** (для неё есть свой проект [TiP-Recomp](https://github.com/SolarCookies/TiP-Recomp)) и **Viva Piñata: Party Animals**. Бонусный диск не нужен.
+> **No game files are included.** You need your own copy of the game, and it must be one specific version (see below).
 
-## Сборка
+## What you need
 
-1. **Клонируйте репозиторий** в папку, путь к которой состоит только из латиницы. `rexglue.exe` падает на путях с символами вроде `ñ`.
+- A Windows 10 or 11 PC (64-bit) with a DirectX 12 graphics card.
+- About **25 GB** of free disk space (Visual Studio ~12 GB, the game ~5 GB, the disc image ~8 GB while unpacking).
+- Your own disc image (`.iso`) of **Viva Pinata (USA, Europe)** for Xbox 360. It must be exactly the version below.
 
+## Which game version you need
+
+| | |
+| :-- | :-- |
+| **Disc (Redump name)** | `Viva Pinata (USA, Europe) (En,Ja,Fr,De,Es,It,Nl,Pt,Sv,No,Zh,Ko,Pl,Cs,Hu,Sk)` |
+| **Title ID / Media ID** | `4D5307F2` / `690B3287` |
+| **Version** | `0.0.0.1`, the original disc, no title update needed |
+| **ISO checksum** | MD5 `3902321dfe15d7d2510a96114dba625a`, CRC32 `f3ddf9d3` |
+
+Other editions have not been tested and will probably not start. *Viva Piñata: Trouble in Paradise* and *Viva Piñata: Party Animals* are different games. You do not need the bonus disc.
+
+## The easy way: let an AI agent install it
+
+1. Install an AI assistant that can run commands on your computer, for example [Claude Code](https://claude.com/claude-code), OpenAI Codex or Cursor.
+2. Paste this message into it, with the real path to your ISO:
+
+   > Install Viva Piñata Recomp on this PC: https://github.com/crabinacrabic/VivaPinataRecomp — follow AGENTS.md from that repository. My game disc image is at `C:\path\to\Viva Pinata.iso`. I also want the Russian language: no / yes, the PC version with the ZoG translation is at `C:\path\to\Viva Pinata PC`.
+
+3. The agent downloads and checks everything. When it asks, click through the Visual Studio installer and press **Build** in Visual Studio.
+4. When it is done, double-click **`run_game.bat`** in the project folder.
+
+## Doing it yourself (6 steps)
+
+1. **Install the tools.** You need:
+   - [Visual Studio 2026 Community](https://visualstudio.microsoft.com/) (free), with the workload **Desktop development with C++** and the component **C++ Clang tools for Windows**;
+   - [Git](https://git-scm.com/).
+2. **Download the project.** Use a folder path that contains only English letters, then run:
    ```bash
-   git clone https://github.com/crabinacrabic/VivaPinataRecomp.git C:/Recompiles/VivaPinata_xbox360
+   git clone https://github.com/crabinacrabic/VivaPinataRecomp.git C:\Games\VivaPinataRecomp
    ```
-
-2. **Распакуйте игру** в `game_files/`. Должны появиться `game_files/default.xex` и папка `game_files/Beta/`.
-
+3. **Unpack the game** with [extract-xiso](https://github.com/XboxDev/extract-xiso/releases/latest) (file `extract-xiso-Win64_Release.zip`):
    ```bash
-   extract-xiso -x -d game_files "Viva Pinata (USA, Europe).iso"
+   extract-xiso -x -d C:\Games\VivaPinataRecomp\game_files "C:\path\to\Viva Pinata (USA, Europe).iso"
    ```
+   Afterwards `game_files` must contain `default.xex` and a `Beta` folder.
+4. **Build it.**
+   - In Visual Studio: **File → Open → Folder…** → select `C:\Games\VivaPinataRecomp`.
+   - Wait until the Output window says the CMake generation has finished. The first time takes a few minutes: it downloads the SDK and converts the game code.
+   - In the toolbar, choose the configuration **`local-win-relwithdebinfo`**.
+   - Click **Build → Build All** (`F7`).
+5. **Start it:** double-click **`run_game.bat`**.
+6. **In the launcher** press **ИГРАТЬ** (Play). The launcher is in Russian:
 
-3. **SDK.** Если папки `rexglue/win-amd64/` нет, [`cmake/fetch-rexglue-sdk.cmake`](cmake/fetch-rexglue-sdk.cmake) скачает SDK с GitHub при первой настройке CMake.
+| Launcher text | Meaning |
+| :-- | :-- |
+| **ИГРАТЬ** | Play (or press `Enter`) |
+| **Настройки** | Settings: text language, fullscreen, V-Sync, render resolution, render mode |
+| **Выход** | Quit |
+| **Показывать при запуске** | Show the launcher at startup |
+| Green line «Игра найдена…» | Game found, correct version |
 
-4. **Откройте папку в Visual Studio** («Открыть локальную папку»), выберите конфигурацию **`local-win-relwithdebinfo`** и нажмите **F7**. Первая сборка сначала запускает генерацию кода (`rexglue codegen`, несколько минут), затем компилирует около сотни сгенерированных файлов.
+## Russian language
 
-## Запуск
+The Xbox disc has no Russian. This project can move the fan translation of the **PC version** by **ZoG Team** ([zoneofgames.ru](https://www.zoneofgames.ru/)) onto the Xbox game. The translation is not stored here: it is built from your own files. You need:
+- the PC version of Viva Piñata with the ZoG translation (`VivaPinata_Rus_Setup.exe`) installed;
+- [7-Zip](https://www.7-zip.org/);
+- [Python 3](https://www.python.org/).
 
-Двойной щелчок по **`run_game.bat`**, или запустите `out/build/local-win-relwithdebinfo/vivapinata.exe`.
+Then run:
 
-При запуске открывается **лаунчер**:
-- Он проверяет, что файлы игры на месте и версия `default.xex` подходит.
-- Кнопка **Настройки** открывает полноэкранный режим, вертикальную синхронизацию, разрешение рендера и режим рендера. Всё выбранное применяется сразу при нажатии **Играть**.
-- Кнопка **Играть** (или `Enter`) запускает игру.
-- Если снять галку «Показывать при запуске», игра будет стартовать сразу. Вернуть лаунчер можно так: запустите `vivapinata.exe --vp_show_launcher=true` один раз и включите галку снова, или удалите `settings/launcher.toml`.
+```bash
+python tools/make_russian_bnl.py --pc-ru "<PC game>/bundles/english.bnl" --pc-en "<PC game>/Install_Rus/backup/bundles/english.bnl"
+```
 
-- Настройки читаются из `settings/`, файлы игры из `game_files/`.
-- Логи пишутся в `logs/` рядом с exe.
+In the launcher, choose **Настройки → Язык текста → Русский**. 12 446 of 12 460 strings are translated; only the credits stay in English. You can switch back to English at any time.
 
-> [!TIP]
-> Запускаете из Visual Studio под отладчиком (**F5**)? Один раз отключите остановку на `0xC0000005`: **Отладка → Окна → Параметры исключений** (Ctrl+Alt+E) → Win32 Exceptions → снимите галку **Access violation**.
->
-> Это не падения. SDK защищает от записи память, переданную видеокарте, и сам обрабатывает такие обращения. Без отладчика (**Ctrl+F5**) этого делать не нужно.
+## Controls
 
-## Русский язык
+The game is made for an Xbox controller, which works right away. The keyboard and mouse can also be used:
 
-На диске Xbox 360 русского языка нет. Проект переносит на него любительский перевод ПК-версии от **ZoG Team** (Zone of Games, 2007). Сам перевод в репозитории не хранится, его собирают из своих файлов:
-
-1. Установите перевод ZoG на ПК-версию Viva Piñata. Установщик заменяет `bundles\english.bnl` и сохраняет оригинал в `Install_Rus\backup\bundles\english.bnl`, понадобятся оба файла.
-2. Установите [7-Zip](https://www.7-zip.org/) и Python 3.
-3. Соберите русский файл для Xbox 360 (путь к ПК-игре подставьте свой):
-
-   ```bash
-   python tools/make_russian_bnl.py --pc-ru "C:/pc_games/Viva Pinata Game/bundles/english.bnl" --pc-en "C:/pc_games/Viva Pinata Game/Install_Rus/backup/bundles/english.bnl"
-   ```
-
-   Появится `game_files/Beta/bundles/russian.bnl`, а список строк, оставшихся на английском, — в `russian_report.txt`.
-4. В лаунчере: **Настройки → Язык текста → Русский**, затем **Играть**.
-
-Что происходит внутри:
-- Строки ПК-версии сопоставляются со строками Xbox 360 по хэшам и тексту.
-- Около трёх десятков строк есть только на Xbox: меню Xbox Live, сообщения о сохранениях, подсказки кнопок геймпада. Их перевели в проекте, в терминах ZoG.
-- Шрифты менять не нужно: в шрифтовом кэше диска уже есть вся кириллица.
-- На английском остаются только титры с именами и пара служебных слов.
-
-Лаунчер копирует `russian.bnl` вместо `english.bnl` и `englishus.bnl`. Оригиналы он один раз сохраняет рядом как `.orig`, а при выборе English возвращает их обратно.
-
-## Управление
-
-Игра рассчитана на геймпад: курсор на левом стике, действия на кнопках. Геймпад Xbox работает сразу. Клавиатура и мышь эмулируют геймпад, мышь управляет камерой (правый стик).
-
-| Геймпад | Клавиатура | | Геймпад | Клавиатура |
+| Controller | Keyboard | | Controller | Keyboard |
 | :-- | :-- | :-- | :-- | :-- |
-| Левый стик (курсор) | `W` `A` `S` `D` | | **A** | `Space` |
-| Правый стик (камера) | стрелки, мышь | | **B** | `Backspace` |
-| Крестовина | `Shift` + стрелки | | **X** | `L` |
+| Left stick (cursor) | `W` `A` `S` `D` | | **A** | `Space` |
+| Right stick (camera) | arrows, mouse | | **B** | `Backspace` |
+| D-pad | `Shift` + arrows | | **X** | `L` |
 | **LT / RT** | `Q` / `E` | | **Y** | `P` |
 | **LB / RB** | `1` / `3` | | **Start** | `Enter` |
 | **L3 / R3** | `F` / `K` | | **Back** | `Tab` |
 
-Клавиши переназначаются в [`settings/mapping.toml`](settings/mapping.toml).
+The keys can be changed in [`settings/mapping.toml`](settings/mapping.toml).
 
-## Настройки
+## Settings
 
-Основной файл: [`settings/hardware.toml`](settings/hardware.toml). Там собраны настройки графики, окна и игры.
+Most settings are in the launcher. Everything else is in [`settings/hardware.toml`](settings/hardware.toml). The launcher saves its own choices to `settings/launcher.toml`; delete that file to reset them.
 
-Лаунчер сохраняет свой выбор в `settings/launcher.toml`. Этот файл загружается после `hardware.toml`, поэтому его значения важнее. Удалите его, чтобы вернуться к `hardware.toml`.
+## What works
 
-| Ключ | Что делает |
+| | |
 | :-- | :-- |
-| `window_width`, `window_height`, `fullscreen` | Размер окна и полноэкранный режим (родное разрешение игры 1280×720) |
-| `resolution_scale` | Масштаб внутреннего разрешения |
-| `vsync` | Вертикальная синхронизация |
-| `render_target_path_d3d12` | Путь рендер-таргетов: `rov` (точнее) или `rtv` (быстрее) |
-| `vp_high_res_timer` | Точный системный таймер (1 мс), включён по умолчанию |
-| `vp_show_launcher` | Показывать лаунчер при запуске |
-| `vp_language` | Язык текста: `en` или `ru` (нужен `russian.bnl`, см. [Русский язык](#русский-язык)) |
-| `vp_skip_intro_videos`, `vp_fps_unlock` | Зарезервированы, пока не действуют |
+| ✅ | Menus, title screen, the garden and the whole game |
+| ✅ | Sound, Xbox controller, keyboard and mouse |
+| ✅ | Launcher with a game version check and graphics settings |
+| ✅ | Russian text (ZoG Team translation) |
+| 🚧 | Skipping intro videos and unlocking 30 FPS are not done yet |
+| 🚧 | Direct3D 12 only |
 
-## Структура проекта
+## If something goes wrong
 
-```
-vivapinata_manifest.toml   манифест codegen, подключает config/*.toml
-config/                    границы функций, хуки, mid-asm хуки, нативный CRT
-src/
-  main.cpp                 точка входа
-  vivapinata_app.h         приложение ReXApp: пути, ввод, таймер, запуск лаунчера
-  launcher.h               лаунчер: проверка игры, настройки, кнопка «Играть»
-  game_fixes.h             все исправления гостевого кода
-  game_cvars.h             настройки vp_*
-settings/                  hardware.toml, mapping.toml, база геймпадов SDL
-assets/launcher/           фон и иконка лаунчера
-tools/                     вспомогательные скрипты на Python
-docs/                      разбор XEX, картинки для README
-game_files/                файлы игры (не в репозитории)
-rexglue/                   ReXGlue SDK (не в репозитории)
-generated/                 код от codegen (не в репозитории, только чтение)
-```
-
-## Для разработчиков
-
-**Правила проекта (для людей и ИИ-агентов):**
-
-1. **`generated/` только для чтения.** Сборка перезапускает codegen при изменении манифеста, любого `config/*.toml` или XEX и перезаписывает каталог. Исправления вносятся только двумя способами:
-   - сильными символами в `src/game_fixes.h` поверх слабых `sub_*`;
-   - записями в `config/*.toml`, включая `[[midasm_hook]]`.
-2. **Сборка и codegen запускаются только из Visual Studio** (F7 / F5), не из терминала.
-3. Общение и отчёты на русском, код и комментарии на английском.
-4. Ретро-стандарт по умолчанию: 30 FPS, `resolution_scale = 1`, D3D12 ROV + readback resolve, без MSAA, XInput.
-
-**Перед F7**, если менялись манифест или `config/*.toml`:
-
-```bash
-python tools/validate_manifest.py
-```
-
-Скрипт повторяет правила слияния конфигов SDK и проверяет ключи, адреса и выравнивание. Код выхода: 0 — всё чисто, 2 — только предупреждения, 1 — ошибки (codegen упадёт).
-
-| Скрипт | Назначение |
+| Problem | What to do |
 | :-- | :-- |
-| `tools/validate_manifest.py` | Проверка манифеста и `config/*.toml` перед сборкой |
-| `tools/find_thunk_holes.py` | Поиск пропущенных сканером adjustor thunks (после каждого codegen) |
-| `tools/stub_sweep_to_toml.py` | Разбор `stub_sweep.txt` (режим `dev_debug_runtime = true`) в записи для `config/` |
-| `tools/data_pointers_to_toml.py` | Функции из таблиц указателей (vtables) в `[functions]` |
-| `tools/make_russian_bnl.py` | Сборка `russian.bnl` из ПК-перевода ZoG Team |
+| Red line in the launcher | The game files are missing or the version is wrong: check `game_files\default.xex` and the version table above |
+| Build error `Microsoft Visual C/C++ Version differs in precompiled file` | Visual Studio was updated. Delete `out\build\local-win-relwithdebinfo\CMakeFiles\vivapinata_recomp.dir\cmake_pch.hxx.pch` and build again |
+| Code generation fails with `0xC0000409` | The project path contains non-English characters. Move the project, for example to `C:\Games\VivaPinataRecomp` |
+| Visual Studio stops at "Access violation" in `memcpy` when started with `F5` | This is not a crash. Turn off breaking on `0xC0000005` (Debug → Windows → Exception Settings), or start with `Ctrl+F5` / `run_game.bat` |
 
-<details>
-<summary><b>Решение проблем при сборке</b></summary>
+Logs are written to `out\build\local-win-relwithdebinfo\logs\`. Detailed technical instructions: **[AGENTS.md](AGENTS.md)**.
 
-- **`Microsoft Visual C/C++ Version differs in precompiled file`** после обновления Visual Studio: удалите `out/build/<конфигурация>/CMakeFiles/vivapinata_recomp.dir/cmake_pch.hxx.pch` и соберите заново.
-- **Codegen падает с `0xC0000409`**: в пути к проекту есть не-ASCII символы.
-- **`Call to invalid or unregistered function at 0x82XXXXXX`**: добавьте `0x82XXXXXX = {}` в `config/vivapinata_functions.toml` и соберите заново. Codegen перезапустится сам.
+## For developers
 
-</details>
+How the project is organised, the development rules and the important fixes: [AGENTS.md](AGENTS.md), section 2. The two biggest fixes:
+- a ReXGlue code generator bug that made the ground white (`vpkd3d128` lost the sign of numbers, [`src/game_fixes.h`](src/game_fixes.h));
+- in-place decompression of Rare's CAFF files, which the Russian text bundle has to respect ([`tools/make_russian_bnl.py`](tools/make_russian_bnl.py)).
 
-## Благодарности
+## Credits
 
-- [ReXGlue SDK](https://github.com/rexglue/rexglue-sdk): рекомпилятор и среда выполнения
-- [Xenia](https://github.com/xenia-project/xenia) и [Xenia Canary](https://github.com/xenia-canary/xenia-canary): графический бэкенд и эталон для сравнения
-- [TiP-Recomp](https://github.com/SolarCookies/TiP-Recomp) (Viva Piñata: Trouble in Paradise): образец архитектуры проекта
-- ZoG Team ([Zone of Games](https://www.zoneofgames.ru/)): русский перевод ПК-версии, который переносится на Xbox 360
-- Rare: за замечательную игру
+- [ReXGlue SDK](https://github.com/rexglue/rexglue-sdk): recompiler and runtime
+- [Xenia](https://github.com/xenia-project/xenia) and [Xenia Canary](https://github.com/xenia-canary/xenia-canary): graphics backend, and the reference used for comparison
+- [TiP-Recomp](https://github.com/SolarCookies/TiP-Recomp): project architecture reference (Viva Piñata: Trouble in Paradise)
+- ZoG Team ([Zone of Games](https://www.zoneofgames.ru/)): the Russian translation of the PC version
+- Rare: for a wonderful game
 
-## Правовая информация
+## Legal
 
-Проект не связан с Microsoft и Rare и не одобрен ими. Репозиторий не содержит файлов игры. Для запуска нужна собственная законно полученная копия. Viva Piñata является товарным знаком Microsoft Corporation.
+This project is not affiliated with or endorsed by Microsoft or Rare. It contains no game files; you need your own legally obtained copy. Viva Piñata is a trademark of Microsoft Corporation.
