@@ -24,5 +24,10 @@ REXCVAR_DEFINE_BOOL(vp_skip_intro_videos, false, "Gameplay",
 REXCVAR_DEFINE_BOOL(vp_high_res_timer, true, "Performance",
                     "timeBeginPeriod(1) at startup so guest Sleep(1) is not quantised to 15.6 ms");
 
+// src/launcher.h. The launcher writes its own choice to settings/launcher.toml;
+// --vp_show_launcher=false skips it for one run.
+REXCVAR_DEFINE_BOOL(vp_show_launcher, true, "UI",
+                    "Show the launcher (play / settings) before the game starts");
+
 REXCVAR_DEFINE_BOOL(dev_debug_runtime, false, "Debug",
                     "Enable runtime debug tools (stub sweep, missing function scan)");

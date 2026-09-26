@@ -22,3 +22,5 @@ BONUS/
 Vimm's Lair.txt
 captures/
 *.rdc
+# per-user choices written by the launcher (src/launcher.h)
+settings/launcher.toml

@@ -2,8 +2,9 @@
 //
 // Lifecycle (rex/rex_app.h):
 //   SetupEnvironment   OnConfigurePaths -> config TOML -> logging -> OnPostInitLogging
-//   SetupPresentation  OnPreSetup(RuntimeConfig&) -> window/ImGui -> OnCreateDialogs
-//   OnFinalizePaths
+//   SetupPresentation  OnPreSetup(RuntimeConfig&) -> window/ImGui (OnConfigureFonts)
+//                      -> OnCreateDialogs
+//   OnFinalizePaths    launcher (src/launcher.h); runtime is built after "ИГРАТЬ"
 //   ConstructRuntime   OnLoadXexImage -> LoadXexImage -> OnPostLoadXexImage -> OnPostSetup
 //   LaunchModule       OnPreLaunchModule -> OnPostLaunchModule(XThread*) -> OnGuestThreadExit
 //   OnShutdown
@@ -23,6 +24,7 @@
 #include "debug_tools.h"
 #include "game_cvars.h"
 #include "game_timing.h"
+#include "launcher.h"
 #include "utils.h"
 
 class VivapinataApp : public rex::ReXApp
@@ -99,6 +101,43 @@ public:
     REXLOG_INFO("Pre-committed guest physical aliases (0xA0000000, 0xC0000000, 0xE0000000)");
   }
 
+  // Segoe UI with Cyrillic for the launcher (the SDK font is Latin-1 only).
+  void OnConfigureFonts(ImFontAtlas *atlas) override
+  {
+    vp_launcher::LoadFonts(atlas);
+  }
+
+  // Launcher: keep the runtime unbuilt until "ИГРАТЬ", so the GPU settings
+  // chosen there (render path, resolution scale) apply to this launch.
+  // --vp_show_launcher=false (or unticking it in the launcher) starts directly.
+  std::optional<rex::PathConfig> OnFinalizePaths(const rex::PathConfig &defaults,
+                                                 std::function<void(rex::PathConfig)> resume) override
+  {
+    if (!REXCVAR_GET(vp_show_launcher) || !imgui_drawer())
+    {
+      return defaults;
+    }
+    launcher_ = std::make_unique<vp_launcher::LauncherDialog>(
+        imgui_drawer(), immediate_drawer(), utils::RepoRoot(), defaults.game_data_root,
+        [this, defaults, resume]() {
+          // Called inside the launcher's ImGui frame: leave it first, then drop
+          // the dialog and build the runtime.
+          app_context().CallInUIThreadDeferred([this, defaults, resume]() {
+            launcher_.reset();
+            resume(defaults);
+          });
+        },
+        [this]() {
+          app_context().CallInUIThreadDeferred([this]() {
+            if (window())
+            {
+              window()->RequestClose();
+            }
+          });
+        });
+    return std::nullopt;
+  }
+
   void OnPostLoadXexImage() override
   {
     PrecommitMemoryAliases();
@@ -130,6 +169,7 @@ public:
 
   void OnShutdown() override
   {
+    launcher_.reset();
     if (REXCVAR_GET(vp_high_res_timer))
     {
       vp_timing::DisableHighResTimer();
@@ -144,4 +184,7 @@ public:
   // void OnPostLaunchModule(rex::system::XThread* thread) override {}
   // std::unique_ptr<rex::ui::ImGuiDialog> CreateAchievementsOverlay() override;
   // std::unique_ptr<rex::ui::AchievementNotificationDialog> CreateAchievementNotificationDialog() override;
+
+private:
+  std::unique_ptr<vp_launcher::LauncherDialog> launcher_;
 };

@@ -43,6 +43,7 @@
 | ✅ | Запуск, меню, титульный экран |
 | ✅ | Сад и игровой процесс, земля и трава отрисовываются так же, как в Xenia Canary |
 | ✅ | Звук, геймпад XInput |
+| ✅ | Лаунчер на русском: проверка версии игры, настройки графики, кнопка «Играть» |
 | 🚧 | Пропуск вступительных роликов и снятие ограничения 30 FPS: настройки `vp_skip_intro_videos` и `vp_fps_unlock` заведены, хуков пока нет |
 | 🚧 | Только Direct3D 12: в готовой сборке SDK Vulkan выключен |
 
@@ -58,8 +59,32 @@
 - Windows 10 или 11, x64
 - Видеокарта с поддержкой Direct3D 12 (проверено на AMD Radeon RX 6600)
 - [Visual Studio 2026](https://visualstudio.microsoft.com/) с нагрузкой «Разработка классических приложений на C++» и компонентом **C++ Clang tools for Windows**; CMake и Ninja входят в Visual Studio
-- Своя копия **Viva Piñata (USA, Europe)** для Xbox 360 (образ диска) и [extract-xiso](https://github.com/XboxDev/extract-xiso)
+- Своя копия **Viva Piñata (USA, Europe)** для Xbox 360, образ диска (точная версия ниже, в разделе [Какая версия игры нужна](#какая-версия-игры-нужна)), и [extract-xiso](https://github.com/XboxDev/extract-xiso)
 - Python 3, только для вспомогательных скриптов из `tools/`
+
+## Какая версия игры нужна
+
+Проект собран и проверен **только** на этой версии диска:
+
+| | |
+| :-- | :-- |
+| **Диск (Redump)** | `Viva Pinata (USA, Europe) (En,Ja,Fr,De,Es,It,Nl,Pt,Sv,No,Zh,Ko,Pl,Cs,Hu,Sk)` |
+| **Title ID** | `4D5307F2` |
+| **Media ID** | `690B3287` |
+| **Версия** | `0.0.0.1`, оригинальный диск; обновление (title update) не нужно |
+| **ISO** | CRC32 `f3ddf9d3`, MD5 `3902321dfe15d7d2510a96114dba625a` |
+| **`default.xex`** | SHA-1 `130dbbe05328eeca23ab830bc8ed3337064eddd3` |
+
+Проверить распакованный `default.xex` можно встроенной командой Windows:
+
+```bash
+certutil -hashfile game_files\default.xex SHA1
+```
+
+> [!IMPORTANT]
+> Рекомпилированный код привязан к адресам именно этого `default.xex`. Другие издания (переиздания, цифровая версия Games on Demand) не проверялись и, скорее всего, не запустятся.
+>
+> Это другие игры, они не подойдут: **Viva Piñata: Trouble in Paradise** (для неё есть свой проект [TiP-Recomp](https://github.com/SolarCookies/TiP-Recomp)) и **Viva Piñata: Party Animals**. Бонусный диск не нужен.
 
 ## Сборка
 
@@ -82,6 +107,12 @@
 ## Запуск
 
 Двойной щелчок по **`run_game.bat`**, или запустите `out/build/local-win-relwithdebinfo/vivapinata.exe`.
+
+При запуске открывается **лаунчер**:
+- Он проверяет, что файлы игры на месте и версия `default.xex` подходит.
+- Кнопка **Настройки** открывает полноэкранный режим, вертикальную синхронизацию, разрешение рендера и режим рендера. Всё выбранное применяется сразу при нажатии **Играть**.
+- Кнопка **Играть** (или `Enter`) запускает игру.
+- Если снять галку «Показывать при запуске», игра будет стартовать сразу. Вернуть лаунчер можно так: запустите `vivapinata.exe --vp_show_launcher=true` один раз и включите галку снова, или удалите `settings/launcher.toml`.
 
 - Настройки читаются из `settings/`, файлы игры из `game_files/`.
 - Логи пишутся в `logs/` рядом с exe.
@@ -110,6 +141,8 @@
 
 Основной файл: [`settings/hardware.toml`](settings/hardware.toml). Там собраны настройки графики, окна и игры.
 
+Лаунчер сохраняет свой выбор в `settings/launcher.toml`. Этот файл загружается после `hardware.toml`, поэтому его значения важнее. Удалите его, чтобы вернуться к `hardware.toml`.
+
 | Ключ | Что делает |
 | :-- | :-- |
 | `window_width`, `window_height`, `fullscreen` | Размер окна и полноэкранный режим (родное разрешение игры 1280×720) |
@@ -117,6 +150,7 @@
 | `vsync` | Вертикальная синхронизация |
 | `render_target_path_d3d12` | Путь рендер-таргетов: `rov` (точнее) или `rtv` (быстрее) |
 | `vp_high_res_timer` | Точный системный таймер (1 мс), включён по умолчанию |
+| `vp_show_launcher` | Показывать лаунчер при запуске |
 | `vp_skip_intro_videos`, `vp_fps_unlock` | Зарезервированы, пока не действуют |
 
 ## Структура проекта
@@ -126,10 +160,12 @@ vivapinata_manifest.toml   манифест codegen, подключает config
 config/                    границы функций, хуки, mid-asm хуки, нативный CRT
 src/
   main.cpp                 точка входа
-  vivapinata_app.h         приложение ReXApp: пути, ввод, таймер
+  vivapinata_app.h         приложение ReXApp: пути, ввод, таймер, запуск лаунчера
+  launcher.h               лаунчер: проверка игры, настройки, кнопка «Играть»
   game_fixes.h             все исправления гостевого кода
   game_cvars.h             настройки vp_*
 settings/                  hardware.toml, mapping.toml, база геймпадов SDL
+assets/launcher/           фон и иконка лаунчера
 tools/                     вспомогательные скрипты на Python
 docs/                      разбор XEX, картинки для README
 game_files/                файлы игры (не в репозитории)

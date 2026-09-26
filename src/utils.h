@@ -28,14 +28,17 @@ namespace utils
 
   static std::filesystem::path SettingsDir() { return RepoRoot() / "settings"; }
 
-  // Both files are flat key = value TOML. Loaded twice on purpose: once from
+  // All files are flat key = value TOML. Loaded twice on purpose: once from
   // OnConfigurePaths (window/input cvars exist already) and again from
   // OnPostSetup (GPU-backend cvars register only after the runtime is up).
+  // launcher.toml (written by src/launcher.h) comes last so the launcher's
+  // choices win over hardware.toml; config sources of equal priority are
+  // last-wins in rex::cvar.
   static void LoadSettingsFiles()
   {
     namespace fs = std::filesystem;
     fs::path dir = SettingsDir();
-    for (const char *file : {"hardware.toml", "mapping.toml"})
+    for (const char *file : {"hardware.toml", "mapping.toml", "launcher.toml"})
     {
       if (fs::path p = dir / file; fs::exists(p))
       {
