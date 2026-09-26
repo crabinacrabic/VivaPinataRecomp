@@ -4,7 +4,7 @@
 //   SetupEnvironment   OnConfigurePaths -> config TOML -> logging -> OnPostInitLogging
 //   SetupPresentation  OnPreSetup(RuntimeConfig&) -> window/ImGui (OnConfigureFonts)
 //                      -> OnCreateDialogs
-//   OnFinalizePaths    launcher (src/launcher.h); runtime is built after "ИГРАТЬ"
+//   OnFinalizePaths    launcher (src/launcher.h); runtime is built after PLAY
 //   ConstructRuntime   OnLoadXexImage -> LoadXexImage -> OnPostLoadXexImage -> OnPostSetup
 //   LaunchModule       OnPreLaunchModule -> OnPostLaunchModule(XThread*) -> OnGuestThreadExit
 //   OnShutdown
@@ -107,7 +107,7 @@ public:
     vp_launcher::LoadFonts(atlas);
   }
 
-  // Launcher: keep the runtime unbuilt until "ИГРАТЬ", so the GPU settings
+  // Launcher: keep the runtime unbuilt until PLAY, so the GPU settings
   // chosen there (render path, resolution scale) apply to this launch.
   // --vp_show_launcher=false (or unticking it in the launcher) starts directly.
   std::optional<rex::PathConfig> OnFinalizePaths(const rex::PathConfig &defaults,

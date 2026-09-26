@@ -75,15 +75,9 @@ Other editions have not been tested and will probably not start. *Viva Piñata: 
    - In the toolbar, choose the configuration **`local-win-relwithdebinfo`**.
    - Click **Build → Build All** (`F7`).
 5. **Start it:** double-click **`run_game.bat`**.
-6. **In the launcher** press **ИГРАТЬ** (Play). The launcher is in Russian:
-
-| Launcher text | Meaning |
-| :-- | :-- |
-| **ИГРАТЬ** | Play (or press `Enter`) |
-| **Настройки** | Settings: text language, fullscreen, V-Sync, render resolution, render mode |
-| **Выход** | Quit |
-| **Показывать при запуске** | Show the launcher at startup |
-| Green line «Игра найдена…» | Game found, correct version |
+6. **In the launcher** press **PLAY** (or `Enter`). A green status line means the game was found and the version is right.
+   - **Settings** has the game text language, fullscreen, V-Sync, render resolution, render mode and the launcher language.
+   - The launcher speaks English or Russian and follows your Windows language. The **EN / RU** button in the top-right corner switches it.
 
 ## Russian language
 
@@ -98,7 +92,7 @@ Then run:
 python tools/make_russian_bnl.py --pc-ru "<PC game>/bundles/english.bnl" --pc-en "<PC game>/Install_Rus/backup/bundles/english.bnl"
 ```
 
-In the launcher, choose **Настройки → Язык текста → Русский**. 12 446 of 12 460 strings are translated; only the credits stay in English. You can switch back to English at any time.
+In the launcher, choose **Settings → Game text language → Russian**. 12 446 of 12 460 strings are translated; only the credits stay in English. You can switch back to English at any time.
 
 ## Controls
 
@@ -125,7 +119,7 @@ Most settings are in the launcher. Everything else is in [`settings/hardware.tom
 | :-- | :-- |
 | ✅ | Menus, title screen, the garden and the whole game |
 | ✅ | Sound, Xbox controller, keyboard and mouse |
-| ✅ | Launcher with a game version check and graphics settings |
+| ✅ | Launcher in English and Russian, with a game version check and graphics settings |
 | ✅ | Russian text (ZoG Team translation) |
 | 🚧 | Skipping intro videos and unlocking 30 FPS are not done yet |
 | 🚧 | Direct3D 12 only |

@@ -86,17 +86,20 @@ Result: `out\build\local-win-relwithdebinfo\vivapinata.exe`.
 
 Start `run_game.bat`. It runs `out\build\local-win-relwithdebinfo\vivapinata.exe`. Settings are read from `settings\`, the game from `game_files\`, and logs go to `out\build\local-win-relwithdebinfo\logs\`.
 
-The launcher UI is in Russian:
+The launcher UI is in English or Russian. It follows the Windows UI language (`vp_launcher_language = "auto"`); the **EN / RU** button in the top-right corner switches it.
 
-| Launcher | Meaning |
+| Launcher (EN / RU) | Meaning |
 | :-- | :-- |
-| **ИГРАТЬ** / `Enter` | Play |
-| **Настройки** | Settings: Язык текста (text language), Полноэкранный режим (fullscreen), Вертикальная синхронизация (V-Sync), Разрешение рендера (render scale), Режим рендера (ROV = accurate / RTV = faster), Точный системный таймер (precise timer) |
-| **Выход** | Quit |
-| **Показывать при запуске** | Show the launcher at startup (`vp_show_launcher`) |
+| **PLAY** / **ИГРАТЬ**, or `Enter` | Start the game |
+| **Settings** / **Настройки** | Game text language, fullscreen, V-Sync, render resolution, render mode (ROV = accurate / RTV = faster), precise timer, launcher language |
+| **Quit** / **Выход** | Close |
+| **Show at startup** / **Показывать при запуске** | `vp_show_launcher` |
 | Status line | green = correct game found; yellow = other `default.xex`; red = game files missing |
 
-Command-line flags: `--vp_show_launcher=false` starts the game directly, `--vp_language=ru|en` sets the text language.
+Command-line flags:
+- `--vp_show_launcher=false` starts the game directly;
+- `--vp_language=ru|en` sets the game text language;
+- `--vp_launcher_language=auto|en|ru` sets the launcher language.
 
 ### 1.7 Optional: Russian language
 
@@ -112,14 +115,14 @@ python tools\make_russian_bnl.py --pc-ru "<PC>\bundles\english.bnl" --pc-en "<PC
 # expected: "...russian.bnl: 12446 strings translated, 14 left in English ..." (about 30 s)
 ```
 
-Then in the launcher choose **Настройки → Язык текста → Русский** and press **ИГРАТЬ**. The launcher copies `russian.bnl` over `english.bnl` and `englishus.bnl` (the game reads `englishus.bnl`) and keeps SHA-1-checked `.orig` backups. Choosing English restores them.
+Then in the launcher choose **Settings → Game text language → Russian** (RU UI: **Настройки → Язык текста → Русский**) and press **PLAY**. The launcher copies `russian.bnl` over `english.bnl` and `englishus.bnl` (the game reads `englishus.bnl`) and keeps SHA-1-checked `.orig` backups. Choosing English restores them.
 
 ### 1.8 Verify
 
 - [ ] `game_files\default.xex` has SHA-1 `130DBBE0…4EDDD3`, and `game_files\Beta\` exists.
 - [ ] `out\build\local-win-relwithdebinfo\vivapinata.exe` exists.
 - [ ] The launcher shows the green status line.
-- [ ] After **ИГРАТЬ**, the title screen shows grass and "Press START" / «Нажми START».
+- [ ] After **PLAY**, the title screen shows grass and "Press START" / «Нажми START».
 
 ### 1.9 Troubleshooting
 

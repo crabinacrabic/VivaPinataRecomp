@@ -1,7 +1,7 @@
-// launcher.h - start-up launcher (ImGui page) shown before the Runtime exists
+// launcher.h - start-up launcher (ImGui page, English / Russian) shown before the Runtime exists
 //
 // VivapinataApp::OnFinalizePaths returns std::nullopt while the launcher is
-// open, so ConstructRuntime (GPU init, XEX load) only runs after "ИГРАТЬ".
+// open, so ConstructRuntime (GPU init, XEX load) only runs after PLAY.
 // Settings picked here therefore apply on this launch: render_target_path_d3d12
 // (kInitOnly) and resolution_scale (kRequiresRestart) are read when the GPU
 // system is set up, which has not happened yet.
@@ -410,20 +410,148 @@ namespace vp_launcher
   inline const ImVec4 kPlayColor(0.18f, 0.64f, 0.31f, 1.0f);
   inline const ImVec4 kSettingsColor(0.22f, 0.45f, 0.60f, 1.0f);
   inline const ImVec4 kQuitColor(0.30f, 0.32f, 0.36f, 1.0f);
+  inline const ImVec4 kSwitchColor(0.10f, 0.12f, 0.11f, 0.75f);
 
-  inline constexpr const char *kScaleNames[] = {
-      "×1 — 1280×720, как на Xbox 360",
-      "×2 — 2560×1440",
-      "×3 — 3840×2160",
-  };
-  inline constexpr const char *kPathNames[] = {
-      "ROV — точнее, рекомендуется",
-      "RTV — быстрее",
-      "Авто — выбор SDK",
-  };
   inline constexpr const char *kPathValues[] = {"rov", "rtv", ""};
-  inline constexpr const char *kLanguageEnglish = "English (оригинал)";
-  inline constexpr const char *kLanguageRussian = "Русский (перевод ZoG Team)";
+
+  // ---------------------------------------------------------------------------
+  // UI text (English / Russian)
+  // ---------------------------------------------------------------------------
+  // vp_launcher_language picks the table; "auto" follows the Windows UI
+  // language. This is only the launcher's own language - the game's text
+  // language is vp_language.
+
+  struct UiText
+  {
+    const char *subtitle;
+    const char *status_ok;
+    const char *status_other;
+    const char *status_missing;
+    const char *hint_other;
+    const char *hint_missing;
+    const char *play;
+    const char *settings;
+    const char *quit;
+    const char *show_on_startup;
+    const char *switch_label;  // top-right button: the other language
+    const char *settings_title;
+    const char *section_game;
+    const char *section_display;
+    const char *section_graphics;
+    const char *section_system;
+    const char *section_launcher;
+    const char *text_language;
+    const char *text_english;
+    const char *text_russian;
+    const char *text_russian_missing;
+    const char *fullscreen;
+    const char *vsync;
+    const char *resolution;
+    const char *scale[3];
+    const char *render_mode;
+    const char *path[3];
+    const char *precise_timer;
+    const char *launcher_language;
+    const char *language_auto;
+    const char *saved_to;
+    const char *done;
+  };
+
+  inline constexpr UiText kTextEn{
+      .subtitle = "Native Windows version · recompiled from Xbox 360",
+      .status_ok = "Game found: Viva Pinata (USA, Europe), correct version",
+      .status_other = "A different default.xex was found: the game may not start",
+      .status_missing = "Game files not found",
+      .hint_other = "You need the Viva Pinata (USA, Europe) disc, Title ID 4D5307F2. See README",
+      .hint_missing = "Unpack the disc into the game_files folder (default.xex and Beta). See README",
+      .play = "PLAY",
+      .settings = "Settings",
+      .quit = "Quit",
+      .show_on_startup = "Show at startup",
+      .switch_label = "RU",
+      .settings_title = "Settings",
+      .section_game = "Game",
+      .section_display = "Display",
+      .section_graphics = "Graphics",
+      .section_system = "System",
+      .section_launcher = "Launcher",
+      .text_language = "Game text language",
+      .text_english = "English (original)",
+      .text_russian = "Russian (ZoG Team translation)",
+      .text_russian_missing = "For Russian, build russian.bnl with tools/make_russian_bnl.py (see README)",
+      .fullscreen = "Fullscreen",
+      .vsync = "Vertical sync",
+      .resolution = "Render resolution",
+      .scale = {"×1 — 1280×720, like the Xbox 360", "×2 — 2560×1440", "×3 — 3840×2160"},
+      .render_mode = "Render mode",
+      .path = {"ROV — accurate, recommended", "RTV — faster", "Auto — chosen by the SDK"},
+      .precise_timer = "Precise system timer (1 ms)",
+      .launcher_language = "Launcher language",
+      .language_auto = "Auto (Windows language)",
+      .saved_to = "Saved to settings/launcher.toml, which overrides hardware.toml",
+      .done = "Done",
+  };
+
+  inline constexpr UiText kTextRu{
+      .subtitle = "Нативная версия для Windows · рекомпиляция с Xbox 360",
+      .status_ok = "Игра найдена: Viva Pinata (USA, Europe), версия подходит",
+      .status_other = "Найдена другая версия default.xex: игра может не запуститься",
+      .status_missing = "Файлы игры не найдены",
+      .hint_other = "Нужен диск Viva Pinata (USA, Europe), Title ID 4D5307F2. Подробности в README",
+      .hint_missing = "Распакуйте диск в папку game_files (default.xex и Beta). Подробности в README",
+      .play = "ИГРАТЬ",
+      .settings = "Настройки",
+      .quit = "Выход",
+      .show_on_startup = "Показывать при запуске",
+      .switch_label = "EN",
+      .settings_title = "Настройки",
+      .section_game = "Игра",
+      .section_display = "Экран",
+      .section_graphics = "Графика",
+      .section_system = "Система",
+      .section_launcher = "Лаунчер",
+      .text_language = "Язык текста",
+      .text_english = "English (оригинал)",
+      .text_russian = "Русский (перевод ZoG Team)",
+      .text_russian_missing = "Для русского соберите russian.bnl: tools/make_russian_bnl.py (README)",
+      .fullscreen = "Полноэкранный режим",
+      .vsync = "Вертикальная синхронизация",
+      .resolution = "Разрешение рендера",
+      .scale = {"×1 — 1280×720, как на Xbox 360", "×2 — 2560×1440", "×3 — 3840×2160"},
+      .render_mode = "Режим рендера",
+      .path = {"ROV — точнее, рекомендуется", "RTV — быстрее", "Авто — выбор SDK"},
+      .precise_timer = "Точный системный таймер (1 мс)",
+      .launcher_language = "Язык лаунчера",
+      .language_auto = "Авто (язык Windows)",
+      .saved_to = "Сохраняется в settings/launcher.toml, он важнее hardware.toml",
+      .done = "Готово",
+  };
+
+  inline bool WindowsPrefersRussian()
+  {
+#if defined(_WIN32)
+    return PRIMARYLANGID(GetUserDefaultUILanguage()) == LANG_RUSSIAN;
+#else
+    return false;
+#endif
+  }
+
+  inline bool UiRussian()
+  {
+    const std::string &lang = REXCVAR_GET(vp_launcher_language);
+    if (lang == "ru")
+    {
+      return true;
+    }
+    if (lang == "en")
+    {
+      return false;
+    }
+    static const bool windows_russian = WindowsPrefersRussian();
+    return windows_russian;
+  }
+
+  inline const UiText &Ui() { return UiRussian() ? kTextRu : kTextEn; }
 
   inline bool ColorButton(const char *label, const ImVec4 &c, const ImVec2 &size)
   {
@@ -489,6 +617,7 @@ namespace vp_launcher
       }
       EnsureTextures();
       const Fonts &fonts = GetFonts();
+      const UiText &ui = Ui();
 
       ImGui::SetNextWindowPos(ImVec2(0.0f, 0.0f), ImGuiCond_Always);
       ImGui::SetNextWindowSize(disp, ImGuiCond_Always);
@@ -527,8 +656,7 @@ namespace vp_launcher
         title_x += 64.0f;
       }
       PanelText(dl, fonts.title, ImVec2(title_x, top), kTextColor, "Viva Piñata Recomp");
-      PanelText(dl, fonts.body, ImVec2(kPad, top + 66.0f), kDimText,
-               "Нативная версия для Windows · рекомпиляция с Xbox 360");
+      PanelText(dl, fonts.body, ImVec2(kPad, top + 66.0f), kDimText, ui.subtitle);
 
       const float status_y = top + 108.0f;
       dl->AddCircleFilled(ImVec2(kPad + 7.0f, status_y + 14.0f), 6.0f, StatusColor());
@@ -552,7 +680,7 @@ namespace vp_launcher
         FontScope font(fonts.button);
         ImGui::SetCursorPos(ImVec2(bx, by));
         ImGui::BeginDisabled(!can_play);
-        play = ColorButton("ИГРАТЬ", kPlayColor, ImVec2(kPlayWidth, kPlayHeight));
+        play = ColorButton(ui.play, kPlayColor, ImVec2(kPlayWidth, kPlayHeight));
         ImGui::EndDisabled();
       }
       by += kPlayHeight + kGap;
@@ -560,19 +688,27 @@ namespace vp_launcher
         FontScope font(fonts.body);
         const float half = (kPlayWidth - kGap) * 0.5f;
         ImGui::SetCursorPos(ImVec2(bx, by));
-        if (ColorButton("Настройки", kSettingsColor, ImVec2(half, kButtonHeight)))
+        if (ColorButton(ui.settings, kSettingsColor, ImVec2(half, kButtonHeight)))
         {
           options_open_ = !options_open_;
         }
         ImGui::SameLine(0.0f, kGap);
-        quit = ColorButton("Выход", kQuitColor, ImVec2(half, kButtonHeight));
+        quit = ColorButton(ui.quit, kQuitColor, ImVec2(half, kButtonHeight));
 
         by += kButtonHeight + kGap;
         ImGui::SetCursorPos(ImVec2(bx, by));
         bool show = REXCVAR_GET(vp_show_launcher);
-        if (ImGui::Checkbox("Показывать при запуске", &show))
+        if (ImGui::Checkbox(ui.show_on_startup, &show))
         {
           settings_.Set("vp_show_launcher", BoolLiteral(show));
+        }
+
+        // Top right: quick switch of the launcher language (shows the other one).
+        const ImVec2 switch_size(64.0f, 36.0f);
+        ImGui::SetCursorPos(ImVec2(disp.x - kPad - switch_size.x, 20.0f));
+        if (ColorButton(ui.switch_label, kSwitchColor, switch_size))
+        {
+          settings_.Set("vp_launcher_language", UiRussian() ? "\"en\"" : "\"ru\"");
         }
       }
 
@@ -666,11 +802,11 @@ namespace vp_launcher
       switch (status_)
       {
       case GameStatus::kOk:
-        return "Игра найдена: Viva Pinata (USA, Europe), версия подходит";
+        return Ui().status_ok;
       case GameStatus::kOtherVersion:
-        return "Найдена другая версия default.xex: игра может не запуститься";
+        return Ui().status_other;
       default:
-        return "Файлы игры не найдены";
+        return Ui().status_missing;
       }
     }
 
@@ -681,9 +817,9 @@ namespace vp_launcher
       case GameStatus::kOk:
         return nullptr;
       case GameStatus::kOtherVersion:
-        return "Нужен диск Viva Pinata (USA, Europe), Title ID 4D5307F2. Подробности в README";
+        return Ui().hint_other;
       default:
-        return "Распакуйте диск в папку game_files (default.xex и Beta). Подробности в README";
+        return Ui().hint_missing;
       }
     }
 
@@ -707,12 +843,15 @@ namespace vp_launcher
         return;
       }
       const Fonts &fonts = GetFonts();
+      const UiText &ui = Ui();
       FontScope font(fonts.body);
       ImGui::SetNextWindowPos(ImVec2(io.DisplaySize.x * 0.5f, io.DisplaySize.y * 0.42f),
                               ImGuiCond_Appearing, ImVec2(0.5f, 0.5f));
       ImGui::PushStyleVar(ImGuiStyleVar_WindowPadding, ImVec2(20.0f, 16.0f));
       ImGui::PushStyleVar(ImGuiStyleVar_WindowRounding, 10.0f);
-      const bool open = ImGui::Begin("Настройки##vp_launcher_options", &options_open_,
+      // "###" keeps the window identity when the title changes language.
+      const std::string title = std::string(ui.settings_title) + "###vp_launcher_options";
+      const bool open = ImGui::Begin(title.c_str(), &options_open_,
                                      ImGuiWindowFlags_AlwaysAutoResize |
                                          ImGuiWindowFlags_NoSavedSettings |
                                          ImGuiWindowFlags_NoCollapse);
@@ -721,17 +860,17 @@ namespace vp_launcher
       {
         constexpr float kItemWidth = 360.0f;
 
-        ImGui::SeparatorText("Игра");
-        ImGui::TextUnformatted("Язык текста");
+        ImGui::SeparatorText(ui.section_game);
+        ImGui::TextUnformatted(ui.text_language);
         const bool russian = russian_available_ && REXCVAR_GET(vp_language) == "ru";
         ImGui::SetNextItemWidth(kItemWidth);
-        if (ImGui::BeginCombo("##vp_language", russian ? kLanguageRussian : kLanguageEnglish))
+        if (ImGui::BeginCombo("##vp_language", russian ? ui.text_russian : ui.text_english))
         {
-          if (ImGui::Selectable(kLanguageEnglish, !russian))
+          if (ImGui::Selectable(ui.text_english, !russian))
           {
             settings_.Set("vp_language", "\"en\"");
           }
-          if (ImGui::Selectable(kLanguageRussian, russian,
+          if (ImGui::Selectable(ui.text_russian, russian,
                                 russian_available_ ? 0 : ImGuiSelectableFlags_Disabled))
           {
             settings_.Set("vp_language", "\"ru\"");
@@ -741,51 +880,65 @@ namespace vp_launcher
         if (!russian_available_)
         {
           FontScope caption(fonts.caption);
-          ImGui::TextDisabled("Для русского соберите russian.bnl: tools/make_russian_bnl.py (README)");
+          ImGui::TextDisabled("%s", ui.text_russian_missing);
         }
 
-        ImGui::SeparatorText("Экран");
+        ImGui::SeparatorText(ui.section_display);
         bool fullscreen = rex::cvar::Query<bool>("fullscreen");
-        if (ImGui::Checkbox("Полноэкранный режим", &fullscreen))
+        if (ImGui::Checkbox(ui.fullscreen, &fullscreen))
         {
           settings_.Set("fullscreen", BoolLiteral(fullscreen));
         }
         bool vsync = rex::cvar::Query<bool>("vsync");
-        if (ImGui::Checkbox("Вертикальная синхронизация", &vsync))
+        if (ImGui::Checkbox(ui.vsync, &vsync))
         {
           settings_.Set("vsync", BoolLiteral(vsync));
         }
-        ImGui::TextUnformatted("Разрешение рендера");
+        ImGui::TextUnformatted(ui.resolution);
         int scale_index = std::clamp(rex::cvar::Query<int32_t>("resolution_scale"), 1, 3) - 1;
         ImGui::SetNextItemWidth(kItemWidth);
-        if (ImGui::Combo("##resolution_scale", &scale_index, kScaleNames, IM_ARRAYSIZE(kScaleNames)))
+        if (ImGui::Combo("##resolution_scale", &scale_index, ui.scale, IM_ARRAYSIZE(ui.scale)))
         {
           settings_.Set("resolution_scale", std::to_string(scale_index + 1));
         }
 
-        ImGui::SeparatorText("Графика");
-        ImGui::TextUnformatted("Режим рендера");
+        ImGui::SeparatorText(ui.section_graphics);
+        ImGui::TextUnformatted(ui.render_mode);
         int path_index = PathIndex(rex::cvar::Query<std::string>("render_target_path_d3d12"));
         ImGui::SetNextItemWidth(kItemWidth);
-        if (ImGui::Combo("##render_target_path", &path_index, kPathNames, IM_ARRAYSIZE(kPathNames)))
+        if (ImGui::Combo("##render_target_path", &path_index, ui.path, IM_ARRAYSIZE(ui.path)))
         {
           settings_.Set("render_target_path_d3d12", std::string("\"") + kPathValues[path_index] + "\"");
         }
 
-        ImGui::SeparatorText("Система");
+        ImGui::SeparatorText(ui.section_system);
         bool timer = REXCVAR_GET(vp_high_res_timer);
-        if (ImGui::Checkbox("Точный системный таймер (1 мс)", &timer))
+        if (ImGui::Checkbox(ui.precise_timer, &timer))
         {
           settings_.Set("vp_high_res_timer", BoolLiteral(timer));
+        }
+
+        ImGui::SeparatorText(ui.section_launcher);
+        ImGui::TextUnformatted(ui.launcher_language);
+        // Language names are shown in their own language; "auto" in the current one.
+        const char *const language_names[] = {ui.language_auto, "English", "Русский"};
+        static constexpr const char *kLanguageValues[] = {"auto", "en", "ru"};
+        const std::string &current = REXCVAR_GET(vp_launcher_language);
+        int language_index = current == "en" ? 1 : current == "ru" ? 2 : 0;
+        ImGui::SetNextItemWidth(kItemWidth);
+        if (ImGui::Combo("##vp_launcher_language", &language_index, language_names,
+                         IM_ARRAYSIZE(language_names)))
+        {
+          settings_.Set("vp_launcher_language", std::string("\"") + kLanguageValues[language_index] + "\"");
         }
 
         ImGui::Spacing();
         {
           FontScope caption(fonts.caption);
-          ImGui::TextDisabled("Сохраняется в settings/launcher.toml, он важнее hardware.toml");
+          ImGui::TextDisabled("%s", ui.saved_to);
         }
         ImGui::Spacing();
-        if (ColorButton("Готово", kSettingsColor, ImVec2(150.0f, 40.0f)))
+        if (ColorButton(ui.done, kSettingsColor, ImVec2(150.0f, 40.0f)))
         {
           options_open_ = false;
         }
