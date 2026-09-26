@@ -44,6 +44,7 @@
 | ✅ | Сад и игровой процесс, земля и трава отрисовываются так же, как в Xenia Canary |
 | ✅ | Звук, геймпад XInput |
 | ✅ | Лаунчер на русском: проверка версии игры, настройки графики, кнопка «Играть» |
+| ✅ | Русский язык: перевод ПК-версии от ZoG Team, перенесённый на Xbox 360 (см. [Русский язык](#русский-язык)) |
 | 🚧 | Пропуск вступительных роликов и снятие ограничения 30 FPS: настройки `vp_skip_intro_videos` и `vp_fps_unlock` заведены, хуков пока нет |
 | 🚧 | Только Direct3D 12: в готовой сборке SDK Vulkan выключен |
 
@@ -122,6 +123,29 @@ certutil -hashfile game_files\default.xex SHA1
 >
 > Это не падения. SDK защищает от записи память, переданную видеокарте, и сам обрабатывает такие обращения. Без отладчика (**Ctrl+F5**) этого делать не нужно.
 
+## Русский язык
+
+На диске Xbox 360 русского языка нет. Проект переносит на него любительский перевод ПК-версии от **ZoG Team** (Zone of Games, 2007). Сам перевод в репозитории не хранится, его собирают из своих файлов:
+
+1. Установите перевод ZoG на ПК-версию Viva Piñata. Установщик заменяет `bundles\english.bnl` и сохраняет оригинал в `Install_Rus\backup\bundles\english.bnl`, понадобятся оба файла.
+2. Установите [7-Zip](https://www.7-zip.org/) и Python 3.
+3. Соберите русский файл для Xbox 360 (путь к ПК-игре подставьте свой):
+
+   ```bash
+   python tools/make_russian_bnl.py --pc-ru "C:/pc_games/Viva Pinata Game/bundles/english.bnl" --pc-en "C:/pc_games/Viva Pinata Game/Install_Rus/backup/bundles/english.bnl"
+   ```
+
+   Появится `game_files/Beta/bundles/russian.bnl`, а список строк, оставшихся на английском, — в `russian_report.txt`.
+4. В лаунчере: **Настройки → Язык текста → Русский**, затем **Играть**.
+
+Что происходит внутри:
+- Строки ПК-версии сопоставляются со строками Xbox 360 по хэшам и тексту.
+- Около трёх десятков строк есть только на Xbox: меню Xbox Live, сообщения о сохранениях, подсказки кнопок геймпада. Их перевели в проекте, в терминах ZoG.
+- Шрифты менять не нужно: в шрифтовом кэше диска уже есть вся кириллица.
+- На английском остаются только титры с именами и пара служебных слов.
+
+Лаунчер копирует `russian.bnl` вместо `english.bnl` и `englishus.bnl`. Оригиналы он один раз сохраняет рядом как `.orig`, а при выборе English возвращает их обратно.
+
 ## Управление
 
 Игра рассчитана на геймпад: курсор на левом стике, действия на кнопках. Геймпад Xbox работает сразу. Клавиатура и мышь эмулируют геймпад, мышь управляет камерой (правый стик).
@@ -151,6 +175,7 @@ certutil -hashfile game_files\default.xex SHA1
 | `render_target_path_d3d12` | Путь рендер-таргетов: `rov` (точнее) или `rtv` (быстрее) |
 | `vp_high_res_timer` | Точный системный таймер (1 мс), включён по умолчанию |
 | `vp_show_launcher` | Показывать лаунчер при запуске |
+| `vp_language` | Язык текста: `en` или `ru` (нужен `russian.bnl`, см. [Русский язык](#русский-язык)) |
 | `vp_skip_intro_videos`, `vp_fps_unlock` | Зарезервированы, пока не действуют |
 
 ## Структура проекта
@@ -198,6 +223,7 @@ python tools/validate_manifest.py
 | `tools/find_thunk_holes.py` | Поиск пропущенных сканером adjustor thunks (после каждого codegen) |
 | `tools/stub_sweep_to_toml.py` | Разбор `stub_sweep.txt` (режим `dev_debug_runtime = true`) в записи для `config/` |
 | `tools/data_pointers_to_toml.py` | Функции из таблиц указателей (vtables) в `[functions]` |
+| `tools/make_russian_bnl.py` | Сборка `russian.bnl` из ПК-перевода ZoG Team |
 
 <details>
 <summary><b>Решение проблем при сборке</b></summary>
@@ -213,6 +239,7 @@ python tools/validate_manifest.py
 - [ReXGlue SDK](https://github.com/rexglue/rexglue-sdk): рекомпилятор и среда выполнения
 - [Xenia](https://github.com/xenia-project/xenia) и [Xenia Canary](https://github.com/xenia-canary/xenia-canary): графический бэкенд и эталон для сравнения
 - [TiP-Recomp](https://github.com/SolarCookies/TiP-Recomp) (Viva Piñata: Trouble in Paradise): образец архитектуры проекта
+- ZoG Team ([Zone of Games](https://www.zoneofgames.ru/)): русский перевод ПК-версии, который переносится на Xbox 360
 - Rare: за замечательную игру
 
 ## Правовая информация

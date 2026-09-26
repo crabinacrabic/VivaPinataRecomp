@@ -115,6 +115,7 @@ public:
   {
     if (!REXCVAR_GET(vp_show_launcher) || !imgui_drawer())
     {
+      ApplyGameLanguage(defaults.game_data_root);
       return defaults;
     }
     launcher_ = std::make_unique<vp_launcher::LauncherDialog>(
@@ -124,6 +125,7 @@ public:
           // the dialog and build the runtime.
           app_context().CallInUIThreadDeferred([this, defaults, resume]() {
             launcher_.reset();
+            ApplyGameLanguage(defaults.game_data_root);
             resume(defaults);
           });
         },
@@ -186,5 +188,11 @@ public:
   // std::unique_ptr<rex::ui::AchievementNotificationDialog> CreateAchievementNotificationDialog() override;
 
 private:
+  // Swaps the text bundles before the guest opens them (vp_language).
+  static void ApplyGameLanguage(const std::filesystem::path &game_root)
+  {
+    vp_launcher::ApplyLanguage(game_root, REXCVAR_GET(vp_language) == "ru");
+  }
+
   std::unique_ptr<vp_launcher::LauncherDialog> launcher_;
 };

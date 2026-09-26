@@ -24,3 +24,5 @@ captures/
 *.rdc
 # per-user choices written by the launcher (src/launcher.h)
 settings/launcher.toml
+# Python bytecode
+__pycache__/

@@ -221,6 +221,77 @@ namespace vp_launcher
   }
 
   // ---------------------------------------------------------------------------
+  // Game text language
+  // ---------------------------------------------------------------------------
+  // The game reads its text from Beta\bundles\english.bnl or englishus.bnl
+  // (both use the same font cache, which already has Cyrillic). The Russian
+  // bundle built by tools/make_russian_bnl.py shares their schema and is
+  // copied over both; the disc files are kept as <name>.bnl.orig. A backup is
+  // made only from a file whose SHA-1 matches the disc, so a manually replaced
+  // file is never mistaken for the original.
+
+  struct BundleFile
+  {
+    const char *name;
+    const char *disc_sha1;
+  };
+  inline constexpr BundleFile kLanguageBundles[] = {
+      {"english.bnl", "093795895fbe38e9faeeca85f5c1532067fd0ae0"},
+      {"englishus.bnl", "b4cc7608ce1f3588d8eef83d854be9bf0273063a"},
+  };
+
+  inline std::filesystem::path BundleDir(const std::filesystem::path &game_root)
+  {
+    return game_root / "Beta" / "bundles";
+  }
+
+  inline bool RussianAvailable(const std::filesystem::path &game_root)
+  {
+    std::error_code ec;
+    return std::filesystem::is_regular_file(BundleDir(game_root) / "russian.bnl", ec);
+  }
+
+  inline void ApplyLanguage(const std::filesystem::path &game_root, bool russian)
+  {
+    namespace fs = std::filesystem;
+    const fs::path dir = BundleDir(game_root);
+    const fs::path ru = dir / "russian.bnl";
+    russian = russian && RussianAvailable(game_root);
+    for (const BundleFile &file : kLanguageBundles)
+    {
+      std::error_code ec;
+      const fs::path current = dir / file.name;
+      fs::path orig = current;
+      orig += ".orig";
+      if (!fs::exists(orig, ec))
+      {
+        if (!russian)
+        {
+          continue;  // never switched: the disc file is in place
+        }
+        if (Sha1Hex(current) != file.disc_sha1)
+        {
+          REXLOG_WARN("launcher: {} is not the disc file and has no .orig backup; left as is",
+                      current.string());
+          continue;
+        }
+        if (!fs::copy_file(current, orig, ec))
+        {
+          REXLOG_WARN("launcher: cannot back up {}: {}", current.string(), ec.message());
+          continue;
+        }
+      }
+      const fs::path &source = russian ? ru : orig;
+      if (!fs::copy_file(source, current, fs::copy_options::overwrite_existing, ec))
+      {
+        REXLOG_WARN("launcher: cannot install {} as {}: {}", source.string(), current.string(),
+                    ec.message());
+      }
+    }
+    REXLOG_INFO("launcher: game text language {}", russian ? "Russian (ZoG Team)" : "English");
+  }
+
+  // ---------------------------------------------------------------------------
   // settings/launcher.toml
   // ---------------------------------------------------------------------------
 
@@ -351,6 +422,8 @@ namespace vp_launcher
       "Авто — выбор SDK",
   };
   inline constexpr const char *kPathValues[] = {"rov", "rtv", ""};
+  inline constexpr const char *kLanguageEnglish = "English (оригинал)";
+  inline constexpr const char *kLanguageRussian = "Русский (перевод ZoG Team)";
 
   inline bool ColorButton(const char *label, const ImVec4 &c, const ImVec2 &size)
   {
@@ -396,6 +469,7 @@ namespace vp_launcher
           repo_root_(std::move(repo_root)),
           settings_(repo_root_ / "settings" / "launcher.toml"),
           status_(CheckGame(game_root)),
+          russian_available_(RussianAvailable(game_root)),
           on_play_(std::move(on_play)),
           on_quit_(std::move(on_quit))
     {
@@ -568,7 +642,7 @@ namespace vp_launcher
       }
       textures_loaded_ = true;
       const std::filesystem::path dir = repo_root_ / "assets" / "launcher";
-      background_ = LoadTexture(dir / "background.jpg", background_w_, background_h_);
+      background_ = LoadTexture(dir / "background.png", background_w_, background_h_);
       int icon_w = 0;
       int icon_h = 0;
       icon_ = LoadTexture(dir / "icon.png", icon_w, icon_h);
@@ -647,6 +721,29 @@ namespace vp_launcher
       {
         constexpr float kItemWidth = 360.0f;
 
+        ImGui::SeparatorText("Игра");
+        ImGui::TextUnformatted("Язык текста");
+        const bool russian = russian_available_ && REXCVAR_GET(vp_language) == "ru";
+        ImGui::SetNextItemWidth(kItemWidth);
+        if (ImGui::BeginCombo("##vp_language", russian ? kLanguageRussian : kLanguageEnglish))
+        {
+          if (ImGui::Selectable(kLanguageEnglish, !russian))
+          {
+            settings_.Set("vp_language", "\"en\"");
+          }
+          if (ImGui::Selectable(kLanguageRussian, russian,
+                                russian_available_ ? 0 : ImGuiSelectableFlags_Disabled))
+          {
+            settings_.Set("vp_language", "\"ru\"");
+          }
+          ImGui::EndCombo();
+        }
+        if (!russian_available_)
+        {
+          FontScope caption(fonts.caption);
+          ImGui::TextDisabled("Для русского соберите russian.bnl: tools/make_russian_bnl.py (README)");
+        }
+
         ImGui::SeparatorText("Экран");
         bool fullscreen = rex::cvar::Query<bool>("fullscreen");
         if (ImGui::Checkbox("Полноэкранный режим", &fullscreen))
@@ -700,6 +797,7 @@ namespace vp_launcher
     std::filesystem::path repo_root_;
     LauncherSettings settings_;
     GameStatus status_;
+    bool russian_available_;
     std::function<void()> on_play_;
     std::function<void()> on_quit_;
 

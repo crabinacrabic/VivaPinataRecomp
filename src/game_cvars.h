@@ -29,5 +29,10 @@ REXCVAR_DEFINE_BOOL(vp_high_res_timer, true, "Performance",
 REXCVAR_DEFINE_BOOL(vp_show_launcher, true, "UI",
                     "Show the launcher (play / settings) before the game starts");
 
+// "ru" installs game_files/Beta/bundles/russian.bnl (tools/make_russian_bnl.py,
+// ZoG Team translation) over english.bnl / englishus.bnl before launch.
+REXCVAR_DEFINE_STRING(vp_language, "en", "Gameplay", "Game text language: en, ru")
+    .allowed({"en", "ru"});
+
 REXCVAR_DEFINE_BOOL(dev_debug_runtime, false, "Debug",
                     "Enable runtime debug tools (stub sweep, missing function scan)");
