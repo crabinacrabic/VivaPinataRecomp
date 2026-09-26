@@ -27,4 +27,197 @@
 # AspectRatio_hook (r3), SkipIntroVideos. All of those addresses are sequel
 # addresses and must be re-derived for this XEX.
 
-# --- first codegen: no hooks ---
+# --- vpkd3d128 v0,v0,5,2,2 (FLOAT16_4, in place): SDK codegen loses the sign
+# of guest lane x when vD == vB. Hook runs BEFORE the instruction, packs
+# correctly and jumps over the generated code. See src/game_fixes.h section 1.
+# Non-in-place packs (0x82137C50/54, 0x82137CB8/C8, 0x82461A3C, FLOAT16_2
+# 0x82461A10) are correct and intentionally not hooked.
+
+# sub_8220A1C8
+[[midasm_hook]]
+address = 0x8220A334
+name = "VpFixVpkd3d128Float16x4"
+registers = ["v0", "fpscr"]
+jump_address = 0x8220A338
+
+[[midasm_hook]]
+address = 0x8220A368
+name = "VpFixVpkd3d128Float16x4"
+registers = ["v0", "fpscr"]
+jump_address = 0x8220A36C
+
+[[midasm_hook]]
+address = 0x8220A38C
+name = "VpFixVpkd3d128Float16x4"
+registers = ["v0", "fpscr"]
+jump_address = 0x8220A390
+
+[[midasm_hook]]
+address = 0x8220A3B4
+name = "VpFixVpkd3d128Float16x4"
+registers = ["v0", "fpscr"]
+jump_address = 0x8220A3B8
+
+[[midasm_hook]]
+address = 0x8220A3D8
+name = "VpFixVpkd3d128Float16x4"
+registers = ["v0", "fpscr"]
+jump_address = 0x8220A3DC
+
+[[midasm_hook]]
+address = 0x8220A3F4
+name = "VpFixVpkd3d128Float16x4"
+registers = ["v0", "fpscr"]
+jump_address = 0x8220A3F8
+
+[[midasm_hook]]
+address = 0x8220A41C
+name = "VpFixVpkd3d128Float16x4"
+registers = ["v0", "fpscr"]
+jump_address = 0x8220A420
+
+[[midasm_hook]]
+address = 0x8220A438
+name = "VpFixVpkd3d128Float16x4"
+registers = ["v0", "fpscr"]
+jump_address = 0x8220A43C
+
+
+# sub_82138070
+[[midasm_hook]]
+address = 0x8213825C
+name = "VpFixVpkd3d128Float16x4"
+registers = ["v0", "fpscr"]
+jump_address = 0x82138260
+
+[[midasm_hook]]
+address = 0x82138288
+name = "VpFixVpkd3d128Float16x4"
+registers = ["v0", "fpscr"]
+jump_address = 0x8213828C
+
+[[midasm_hook]]
+address = 0x821382B4
+name = "VpFixVpkd3d128Float16x4"
+registers = ["v0", "fpscr"]
+jump_address = 0x821382B8
+
+[[midasm_hook]]
+address = 0x821382D4
+name = "VpFixVpkd3d128Float16x4"
+registers = ["v0", "fpscr"]
+jump_address = 0x821382D8
+
+[[midasm_hook]]
+address = 0x821382F0
+name = "VpFixVpkd3d128Float16x4"
+registers = ["v0", "fpscr"]
+jump_address = 0x821382F4
+
+[[midasm_hook]]
+address = 0x8213834C
+name = "VpFixVpkd3d128Float16x4"
+registers = ["v0", "fpscr"]
+jump_address = 0x82138350
+
+[[midasm_hook]]
+address = 0x82138368
+name = "VpFixVpkd3d128Float16x4"
+registers = ["v0", "fpscr"]
+jump_address = 0x8213836C
+
+[[midasm_hook]]
+address = 0x821383C4
+name = "VpFixVpkd3d128Float16x4"
+registers = ["v0", "fpscr"]
+jump_address = 0x821383C8
+
+[[midasm_hook]]
+address = 0x821383E0
+name = "VpFixVpkd3d128Float16x4"
+registers = ["v0", "fpscr"]
+jump_address = 0x821383E4
+
+[[midasm_hook]]
+address = 0x82138440
+name = "VpFixVpkd3d128Float16x4"
+registers = ["v0", "fpscr"]
+jump_address = 0x82138444
+
+[[midasm_hook]]
+address = 0x82138464
+name = "VpFixVpkd3d128Float16x4"
+registers = ["v0", "fpscr"]
+jump_address = 0x82138468
+
+
+# sub_82207E38 (terrain patch grid builder)
+[[midasm_hook]]
+address = 0x82208354
+name = "VpFixVpkd3d128Float16x4"
+registers = ["v0", "fpscr"]
+jump_address = 0x82208358
+
+[[midasm_hook]]
+address = 0x8220836C
+name = "VpFixVpkd3d128Float16x4"
+registers = ["v0", "fpscr"]
+jump_address = 0x82208370
+
+
+# sub_82137AC0
+[[midasm_hook]]
+address = 0x82137C5C
+name = "VpFixVpkd3d128Float16x4"
+registers = ["v0", "fpscr"]
+jump_address = 0x82137C60
+
+
+# sub_82148B58
+[[midasm_hook]]
+address = 0x82148D50
+name = "VpFixVpkd3d128Float16x4"
+registers = ["v0", "fpscr"]
+jump_address = 0x82148D54
+
+[[midasm_hook]]
+address = 0x82148D70
+name = "VpFixVpkd3d128Float16x4"
+registers = ["v0", "fpscr"]
+jump_address = 0x82148D74
+
+[[midasm_hook]]
+address = 0x82148E24
+name = "VpFixVpkd3d128Float16x4"
+registers = ["v0", "fpscr"]
+jump_address = 0x82148E28
+
+[[midasm_hook]]
+address = 0x82148E48
+name = "VpFixVpkd3d128Float16x4"
+registers = ["v0", "fpscr"]
+jump_address = 0x82148E4C
+
+[[midasm_hook]]
+address = 0x82148F04
+name = "VpFixVpkd3d128Float16x4"
+registers = ["v0", "fpscr"]
+jump_address = 0x82148F08
+
+[[midasm_hook]]
+address = 0x82148F1C
+name = "VpFixVpkd3d128Float16x4"
+registers = ["v0", "fpscr"]
+jump_address = 0x82148F20
+
+[[midasm_hook]]
+address = 0x82148FD0
+name = "VpFixVpkd3d128Float16x4"
+registers = ["v0", "fpscr"]
+jump_address = 0x82148FD4
+
+[[midasm_hook]]
+address = 0x82148FEC
+name = "VpFixVpkd3d128Float16x4"
+registers = ["v0", "fpscr"]
+jump_address = 0x82148FF0

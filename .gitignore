@@ -20,3 +20,5 @@ rexglue/*
 *.lnk
 BONUS/
 Vimm's Lair.txt
+captures/
+*.rdc
