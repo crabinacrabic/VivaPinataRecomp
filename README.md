@@ -1,82 +1,184 @@
-# vivapinata — статическая рекомпиляция Viva Piñata (Xbox 360, 2006)
+<div align="center">
+
+<img src="docs/images/icon.png" width="96" alt="Viva Piñata icon">
+
+# Viva Piñata Recomp
+
+**Статическая рекомпиляция Viva Piñata (Xbox 360, 2006) в нативную программу для Windows**
+
+[![Platform](https://img.shields.io/badge/platform-Windows%20x64-0078D6?logo=windows&logoColor=white)](#требования)
+[![Title ID](https://img.shields.io/badge/Title%20ID-4D5307F2-107C10?logo=xbox&logoColor=white)](docs/XEX_ANALYSIS.md)
+[![ReXGlue SDK](https://img.shields.io/badge/ReXGlue%20SDK-v0.10.0.8-8A2BE2)](https://github.com/rexglue/rexglue-sdk)
+[![Renderer](https://img.shields.io/badge/render-Direct3D%2012-blue)](#настройки)
+[![C++23](https://img.shields.io/badge/C%2B%2B-23-00599C?logo=cplusplus&logoColor=white)](CMakeLists.txt)
+[![Status](https://img.shields.io/badge/status-playable-2ea44f)](#статус)
+
+<img src="docs/images/title_screen.jpg" width="49%" alt="Титульный экран"> <img src="docs/images/garden.jpg" width="49%" alt="Сад">
+
+</div>
+
+---
+
+## О проекте
+
+Это не эмулятор. Код игры для процессора Xbox 360 (PowerPC, Xenon) переведён в C++ с помощью [ReXGlue SDK](https://github.com/rexglue/rexglue-sdk) и собран как обычная 64-битная программа для Windows. Процессорный код выполняется напрямую, а графику Xenos отрисовывает бэкенд Direct3D 12, унаследованный от Xenia.
+
+Файлы игры в репозиторий не входят. Для запуска нужна собственная копия игры.
 
 | | |
-|---|---|
-| Title ID | `4D5307F2` (US/EU мультирегион; `4D5307F1` из ТЗ — это Fable II) |
-| XEX | `game_files/default.xex`, `PinataParadiseRO.pe`, XDK 2.0.3529, образ `0x82000000..0x82B90000`, entry `0x826B8B48` |
-| SDK | ReXGlue **v0.10.0.8-dev.g1406e1b** (`rexglue/win-amd64`, копия из ArmyOfTwoRE2008) |
-| Toolchain | Visual Studio 18 2026, ClangCL, C++23 (как AO2) |
-| База знаний | `C:\Recompiles\Knowlage_BASE` (`SKILL.md`, `ROOT_INDEX.json`, `CROSS_INSPECTION_AO2.md`) |
-| Эталон | `C:\Recompiles\reference_repos\viva_pinata_recomp` = TiP-Recomp (**сиквел 2008**, адреса не переносятся) |
+| :-- | :-- |
+| **Игра** | Viva Piñata (USA, Europe), Rare / Microsoft, 2006 |
+| **Title ID** | `4D5307F2` |
+| **XEX** | `default.xex`, XDK 2.0.3529, образ `0x82000000..0x82B90000` |
+| **Рекомпилировано** | 19 714 функций в 99 файлах C++ |
+| **SDK** | ReXGlue v0.10.0.8-dev.g1406e1b |
+| **Сборка** | Visual Studio 2026, Clang (ClangCL), C++23, CMake + Ninja |
 
-Подробное техзаключение по XEX: [docs/XEX_ANALYSIS.md](docs/XEX_ANALYSIS.md).
+Подробный разбор XEX: [docs/XEX_ANALYSIS.md](docs/XEX_ANALYSIS.md).
 
-## Железные правила
+## Статус
 
-1. **Никаких сборок из терминала** — ни `cmake --build`, ни `ninja`, ни `cl`, ни `rexglue codegen`. Сборку (и codegen, который она запускает) делает человек в Visual Studio: **F7** — сборка, **F5** — запуск.
-2. **`generated/` — только чтение.** Codegen перезапускается сборкой при изменении манифеста, любого `config/*.toml` или XEX и стирает каталог. Все хуки — в `src/game_fixes.h` (сильные символы поверх слабых `sub_*`) или в таблицах `config/*.toml`.
-3. Отчёты и общение — по-русски, код и комментарии — по-английски.
-4. Retro-стандарт: 30 FPS, `resolution_scale = 1`, ROV D3D12 + readback resolve, MSAA off, XInput.
+| | |
+| :-- | :-- |
+| ✅ | Запуск, меню, титульный экран |
+| ✅ | Сад и игровой процесс, земля и трава отрисовываются так же, как в Xenia Canary |
+| ✅ | Звук, геймпад XInput |
+| 🚧 | Пропуск вступительных роликов и снятие ограничения 30 FPS: настройки `vp_skip_intro_videos` и `vp_fps_unlock` заведены, хуков пока нет |
+| 🚧 | Только Direct3D 12: в готовой сборке SDK Vulkan выключен |
 
-## Структура
+## Главные исправления
+
+| Проблема | Причина | Решение |
+| :-- | :-- | :-- |
+| **Белая земля** на титульном экране и в саду | Ошибка генератора кода ReXGlue: `vpkd3d128` (упаковка float → float16), если регистр назначения совпадает с источником, читает знак из уже затёртого места. Все отрицательные координаты сетки ландшафта становились положительными, и 3/4 сада не рисовались | 30 mid-asm хуков с правильной упаковкой: [`src/game_fixes.h`](src/game_fixes.h), [`config/vivapinata_midasm.toml`](config/vivapinata_midasm.toml). Ошибка передана авторам SDK |
+| **Вылеты** `Call to invalid or unregistered function` | Сканер SDK не находит методы, доступные только через таблицы виртуальных функций (adjustor thunks, маленькие геттеры) | Границы функций вручную в [`config/vivapinata_functions.toml`](config/vivapinata_functions.toml), поиск: [`tools/find_thunk_holes.py`](tools/find_thunk_holes.py) |
+
+## Требования
+
+- Windows 10 или 11, x64
+- Видеокарта с поддержкой Direct3D 12 (проверено на AMD Radeon RX 6600)
+- [Visual Studio 2026](https://visualstudio.microsoft.com/) с нагрузкой «Разработка классических приложений на C++» и компонентом **C++ Clang tools for Windows**; CMake и Ninja входят в Visual Studio
+- Своя копия **Viva Piñata (USA, Europe)** для Xbox 360 (образ диска) и [extract-xiso](https://github.com/XboxDev/extract-xiso)
+- Python 3, только для вспомогательных скриптов из `tools/`
+
+## Сборка
+
+1. **Клонируйте репозиторий** в папку, путь к которой состоит только из латиницы. `rexglue.exe` падает на путях с символами вроде `ñ`.
+
+   ```bash
+   git clone https://github.com/crabinacrabic/VivaPinataRecomp.git C:/Recompiles/VivaPinata_xbox360
+   ```
+
+2. **Распакуйте игру** в `game_files/`. Должны появиться `game_files/default.xex` и папка `game_files/Beta/`.
+
+   ```bash
+   extract-xiso -x -d game_files "Viva Pinata (USA, Europe).iso"
+   ```
+
+3. **SDK.** Если папки `rexglue/win-amd64/` нет, [`cmake/fetch-rexglue-sdk.cmake`](cmake/fetch-rexglue-sdk.cmake) скачает SDK с GitHub при первой настройке CMake.
+
+4. **Откройте папку в Visual Studio** («Открыть локальную папку»), выберите конфигурацию **`local-win-relwithdebinfo`** и нажмите **F7**. Первая сборка сначала запускает генерацию кода (`rexglue codegen`, несколько минут), затем компилирует около сотни сгенерированных файлов.
+
+## Запуск
+
+Двойной щелчок по **`run_game.bat`**, или запустите `out/build/local-win-relwithdebinfo/vivapinata.exe`.
+
+- Настройки читаются из `settings/`, файлы игры из `game_files/`.
+- Логи пишутся в `logs/` рядом с exe.
+
+> [!TIP]
+> Запускаете из Visual Studio под отладчиком (**F5**)? Один раз отключите остановку на `0xC0000005`: **Отладка → Окна → Параметры исключений** (Ctrl+Alt+E) → Win32 Exceptions → снимите галку **Access violation**.
+>
+> Это не падения. SDK защищает от записи память, переданную видеокарте, и сам обрабатывает такие обращения. Без отладчика (**Ctrl+F5**) этого делать не нужно.
+
+## Управление
+
+Игра рассчитана на геймпад: курсор на левом стике, действия на кнопках. Геймпад Xbox работает сразу. Клавиатура и мышь эмулируют геймпад, мышь управляет камерой (правый стик).
+
+| Геймпад | Клавиатура | | Геймпад | Клавиатура |
+| :-- | :-- | :-- | :-- | :-- |
+| Левый стик (курсор) | `W` `A` `S` `D` | | **A** | `Space` |
+| Правый стик (камера) | стрелки, мышь | | **B** | `Backspace` |
+| Крестовина | `Shift` + стрелки | | **X** | `L` |
+| **LT / RT** | `Q` / `E` | | **Y** | `P` |
+| **LB / RB** | `1` / `3` | | **Start** | `Enter` |
+| **L3 / R3** | `F` / `K` | | **Back** | `Tab` |
+
+Клавиши переназначаются в [`settings/mapping.toml`](settings/mapping.toml).
+
+## Настройки
+
+Основной файл: [`settings/hardware.toml`](settings/hardware.toml). Там собраны настройки графики, окна и игры.
+
+| Ключ | Что делает |
+| :-- | :-- |
+| `window_width`, `window_height`, `fullscreen` | Размер окна и полноэкранный режим (родное разрешение игры 1280×720) |
+| `resolution_scale` | Масштаб внутреннего разрешения |
+| `vsync` | Вертикальная синхронизация |
+| `render_target_path_d3d12` | Путь рендер-таргетов: `rov` (точнее) или `rtv` (быстрее) |
+| `vp_high_res_timer` | Точный системный таймер (1 мс), включён по умолчанию |
+| `vp_skip_intro_videos`, `vp_fps_unlock` | Зарезервированы, пока не действуют |
+
+## Структура проекта
 
 ```
-vivapinata_manifest.toml     [project]/[entrypoint] + includes → config/*.toml
-config/
-  vivapinata_ctx.toml        флаги локализации регистров (все false) + [analysis]
-  vivapinata_functions.toml  ручные границы функций (из UnresolvedCall)
-  vivapinata_hooks.toml      [functions] с name → символы rex_* для хуков
-  vivapinata_midasm.toml     [[midasm_hook]]
-  vivapinata_crt.toml        [rexcrt] нативный CRT (пусто на первом прогоне)
-CMakeLists.txt               project(vivapinata), fetch SDK, rexglue_setup_target(... GPU_PLUGINS xenos)
-CMakePresets.json            от `rexglue init` (Ninja + clang)
-CMakeUserPresets.json        CMAKE_PREFIX_PATH = rexglue/win-amd64
-cmake/fetch-rexglue-sdk.cmake
-generated/rexglue.cmake      SDK-glue от `rexglue init` — READ-ONLY
-generated/default/           появится после первого codegen — READ-ONLY
+vivapinata_manifest.toml   манифест codegen, подключает config/*.toml
+config/                    границы функций, хуки, mid-asm хуки, нативный CRT
 src/
-  main.cpp                   roundeven-шимы, init.h, game_fixes.h, app, REX_DEFINE_APP
-  vivapinata_app.h           ReXApp: пути, XInput, precommit алиасов, timeBeginPeriod, debug tools
-  game_fixes.h               ВСЕ переопределения гостевых функций (включается один раз)
-  game_cvars.h               vp_* cvars + graphics_backend + dev_debug_runtime
-  game_constants.h           Title/Media ID, image base/size/entry, kCodeBase из pch
-  game_timing.h              timeBeginPeriod, SpinBackoff, PreciseSleep (порт TiP SleepHooks)
-  debug_tools.h              stub sweep / missing-function scan
-  utils.h                    RepoRoot(), SettingsDir(), LoadSettingsFiles()
-  vivapinata.rc / .ico / winresrc.h
-settings/hardware.toml       основной конфиг SDK (GPU, окно, retro-настройки, vp_* cvars)
-settings/mapping.toml        ввод (XInput + клавиатура/мышь)
-game_files/                  извлечённый ISO: default.xex + Beta\ (5,2 ГБ, в .gitignore)
-docs/XEX_ANALYSIS.md         заключение по XEX
-tools/validate_manifest.py   pre-flight проверка цепочки манифеста (запускать перед F7)
-tools/find_thunk_holes.py    пропущенные сканером MSVC adjustor-thunk-и (после каждого codegen; --toml для вставки)
+  main.cpp                 точка входа
+  vivapinata_app.h         приложение ReXApp: пути, ввод, таймер
+  game_fixes.h             все исправления гостевого кода
+  game_cvars.h             настройки vp_*
+settings/                  hardware.toml, mapping.toml, база геймпадов SDL
+tools/                     вспомогательные скрипты на Python
+docs/                      разбор XEX, картинки для README
+game_files/                файлы игры (не в репозитории)
+rexglue/                   ReXGlue SDK (не в репозитории)
+generated/                 код от codegen (не в репозитории, только чтение)
 ```
 
-## Перед каждым F7, если менялись манифест или config/*.toml
+## Для разработчиков
+
+**Правила проекта (для людей и ИИ-агентов):**
+
+1. **`generated/` только для чтения.** Сборка перезапускает codegen при изменении манифеста, любого `config/*.toml` или XEX и перезаписывает каталог. Исправления вносятся только двумя способами:
+   - сильными символами в `src/game_fixes.h` поверх слабых `sub_*`;
+   - записями в `config/*.toml`, включая `[[midasm_hook]]`.
+2. **Сборка и codegen запускаются только из Visual Studio** (F7 / F5), не из терминала.
+3. Общение и отчёты на русском, код и комментарии на английском.
+4. Ретро-стандарт по умолчанию: 30 FPS, `resolution_scale = 1`, D3D12 ROV + readback resolve, без MSAA, XInput.
+
+**Перед F7**, если менялись манифест или `config/*.toml`:
 
 ```bash
 python tools/validate_manifest.py
 ```
 
-Эмулирует merge-семантику SDK (`config.h`: скаляры last-wins, таблицы аддитивно,
-`[[midasm_hook]]` дедуп по address), проверяет схему ключей, выравнивание и
-попадание адресов в образ, size/end, группу heap в `[rexcrt]`, пару
-setjmp/longjmp, уникальность имён. Exit 0 — чисто, 2 — только предупреждения,
-1 — ошибки (codegen упадёт).
+Скрипт повторяет правила слияния конфигов SDK и проверяет ключи, адреса и выравнивание. Код выхода: 0 — всё чисто, 2 — только предупреждения, 1 — ошибки (codegen упадёт).
 
-## Первый codegen — пошагово
+| Скрипт | Назначение |
+| :-- | :-- |
+| `tools/validate_manifest.py` | Проверка манифеста и `config/*.toml` перед сборкой |
+| `tools/find_thunk_holes.py` | Поиск пропущенных сканером adjustor thunks (после каждого codegen) |
+| `tools/stub_sweep_to_toml.py` | Разбор `stub_sweep.txt` (режим `dev_debug_runtime = true`) в записи для `config/` |
+| `tools/data_pointers_to_toml.py` | Функции из таблиц указателей (vtables) в `[functions]` |
 
-0. **Переименовать папку проекта в ASCII** (например `C:\Recompiles\VivaPinata_xbox360`): `rexglue.exe` падает (`0xC0000409`) на `ñ` в пути, codegen из VS упадёт так же. Заодно вынести ISO/7z из корня.
-1. Открыть папку проекта в Visual Studio 2026 («Open a local folder» → CMake-проект). Выбрать конфигурацию **`local-win-relwithdebinfo`** (или `local-win-release`) из `CMakeUserPresets.json`. Проверить в Output → CMake строку `Found ReXGlue SDK 0.10.0.8-dev.g1406e1b at .../rexglue/win-amd64/lib/cmake/rexglue`.
-2. **F7.** Первый прогон запускает цель `vivapinata_codegen` → `rexglue codegen vivapinata_manifest.toml`. Ожидать несколько минут; в Output смотреть `Validate phase`. Ошибки `UnresolvedCall 0x82XXXXXX` → добавить `0x82XXXXXX = {}` в `config/vivapinata_functions.toml` → снова F7 (codegen перезапустится сам по stamp).
-3. После успешного codegen проверить `generated/default/`: `vivapinata_pch.h` (`REX_CODE_BASE`/`REX_CODE_SIZE`), `sources.cmake`, число `vivapinata_recomp.N.cpp`, `codegen.partition.json`. Записать в `docs/XEX_ANALYSIS.md` §2: code base/size, число функций, число unit-файлов.
-4. Дать сборке дойти до линковки `vivapinata.exe`. Ошибки линковки вида `unresolved __imp__X…` (XAM-экспорты старого XDK) — фиксировать в `src/game_fixes.h` через `REX_STUB`/`REX_STUB_RETURN`.
-5. **Перед первым F5 — один раз:** Отладка → Окна → Параметры исключений (Ctrl+Alt+E) → Win32 Exceptions → снять галку **`0xC0000005 Access violation`**. SDK write-protect'ит физические страницы, залитые в GPU, и штатно ловит запись в них своим обработчиком; с галкой VS останавливается на каждой такой странице (выглядит как падение в `memcpy`). Без отладчика — Ctrl+F5.
-6. **F5.** Смотреть `out/build/<preset>/logs/vivapinata_NNN.log` (`ls -t`): загрузка XEX, монтирование `game:`, первые `NtCreateFile game:\Beta\...`, `Call to invalid or unregistered function` → адрес в `vivapinata_functions.toml`. При зависаниях/чёрном экране — сначала конфиг-эксперименты (`render_target_path_d3d12 = "rtv"`, `vsync = false`), потом код.
-7. Каждую найденную проблему — в KB: `ERROR_LOOKUP_TABLE.md` + `ROOT_INDEX.json` (новый раздел под `4D5307F2`).
+<details>
+<summary><b>Решение проблем при сборке</b></summary>
 
-## Куда дальше (после первого запуска)
+- **`Microsoft Visual C/C++ Version differs in precompiled file`** после обновления Visual Studio: удалите `out/build/<конфигурация>/CMakeFiles/vivapinata_recomp.dir/cmake_pch.hxx.pch` и соберите заново.
+- **Codegen падает с `0xC0000409`**: в пути к проекту есть не-ASCII символы.
+- **`Call to invalid or unregistered function at 0x82XXXXXX`**: добавьте `0x82XXXXXX = {}` в `config/vivapinata_functions.toml` и соберите заново. Codegen перезапустится сам.
 
-- Ghidra + `tomcl7/ghidra-fidb-xenonsdk` (XDK 2.0.3529) → имена CRT/XAPI → `config/vivapinata_crt.toml` (memcpy/memset → file I/O → heap-группа целиком) и `setjmp/longjmp` в манифест.
-- Хуки по списку TiP-Recomp: `XUsbcam*` заглушки, интро-ролики, `vsync_hook` (interval r10), aspect ratio, cursor/mouse.
-- Только затем — флаги `config/vivapinata_ctx.toml` по одному (`skip_lr` → `skip_msr` → …) с полным прогоном после каждого.
+</details>
+
+## Благодарности
+
+- [ReXGlue SDK](https://github.com/rexglue/rexglue-sdk): рекомпилятор и среда выполнения
+- [Xenia](https://github.com/xenia-project/xenia) и [Xenia Canary](https://github.com/xenia-canary/xenia-canary): графический бэкенд и эталон для сравнения
+- [TiP-Recomp](https://github.com/SolarCookies/TiP-Recomp) (Viva Piñata: Trouble in Paradise): образец архитектуры проекта
+- Rare: за замечательную игру
+
+## Правовая информация
+
+Проект не связан с Microsoft и Rare и не одобрен ими. Репозиторий не содержит файлов игры. Для запуска нужна собственная законно полученная копия. Viva Piñata является товарным знаком Microsoft Corporation.
