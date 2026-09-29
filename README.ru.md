@@ -146,7 +146,7 @@
 
 - [ReXGlue SDK](https://github.com/rexglue/rexglue-sdk): рекомпилятор и среда выполнения
 - [Xenia](https://github.com/xenia-project/xenia) и [Xenia Canary](https://github.com/xenia-canary/xenia-canary): графический бэкенд и эталон для сравнения
-- [TiP-Recomp](https://github.com/SolarCookies/TiP-Recomp): образец архитектуры (Viva Piñata: Trouble in Paradise)
+- [TiP-Recomp](https://github.com/SolarCookies/TiP-Recomp) (SolarCookies): образец архитектуры и имена функций движка (Viva Piñata: Trouble in Paradise), используются с разрешения автора
 - ZoG Team ([Zone of Games](https://www.zoneofgames.ru/)): русский перевод ПК-версии
 - Rare: за замечательную игру
 

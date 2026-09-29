@@ -146,7 +146,7 @@ How the project is organised, the development rules and the important fixes: [AG
 
 - [ReXGlue SDK](https://github.com/rexglue/rexglue-sdk): recompiler and runtime
 - [Xenia](https://github.com/xenia-project/xenia) and [Xenia Canary](https://github.com/xenia-canary/xenia-canary): graphics backend, and the reference used for comparison
-- [TiP-Recomp](https://github.com/SolarCookies/TiP-Recomp): project architecture reference (Viva Piñata: Trouble in Paradise)
+- [TiP-Recomp](https://github.com/SolarCookies/TiP-Recomp) (SolarCookies): project architecture reference and engine function names (Viva Piñata: Trouble in Paradise), used with the author's permission
 - ZoG Team ([Zone of Games](https://www.zoneofgames.ru/)): the Russian translation of the PC version
 - Rare: for a wonderful game
 
