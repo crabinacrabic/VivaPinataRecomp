@@ -50,7 +50,7 @@
 1. Поставьте ИИ-помощника, который умеет выполнять команды на компьютере, например [Claude Code](https://claude.com/claude-code), OpenAI Codex или Cursor.
 2. Вставьте ему это сообщение, подставив настоящий путь к своему ISO:
 
-   > Установи Viva Piñata Recomp на этот компьютер: https://github.com/crabinacrabic/VivaPinataRecomp — действуй по файлу AGENTS.md из этого репозитория. Образ диска игры лежит тут: `C:\путь\к\Viva Pinata.iso`. Русский язык: не нужен / нужен, ПК-версия с переводом ZoG лежит тут: `C:\путь\к\Viva Pinata PC`.
+   > Установи Viva Piñata Recomp на этот компьютер: https://github.com/crabinacrabic/VivaPinataRecomp — действуй по файлу AGENTS.md из этого репозитория. Образ диска игры лежит тут: `C:\путь\к\Viva Pinata.iso`. Русский язык: не нужен / нужен.
 
 3. Агент сам всё скачает и проверит. Когда он попросит, пройдите установщик Visual Studio и нажмите **Сборка** в Visual Studio.
 4. Когда он закончит, запустите **`run_game.bat`** в папке проекта.
@@ -81,18 +81,19 @@
 
 ## Русский язык
 
-На диске Xbox 360 русского нет. Проект переносит на него любительский перевод **ПК-версии** от **ZoG Team** ([zoneofgames.ru](https://www.zoneofgames.ru/)). Сам перевод здесь не хранится, он собирается из ваших файлов. Нужны:
-- ПК-версия Viva Piñata с установленным переводом ZoG (`VivaPinata_Rus_Setup.exe`);
-- [7-Zip](https://www.7-zip.org/);
-- [Python 3](https://www.python.org/).
+На диске Xbox 360 русского нет. Проект переносит на него любительский перевод **ПК-версии** от **ZoG Team** ([zoneofgames.ru](https://www.zoneofgames.ru/)) с разрешения команды. Сам перевод в репозитории не хранится.
 
-Затем выполните:
+1. Скачайте **[VivaPinata_Russian_v1.zip](https://disk.yandex.ru/d/9lgjQVp7fArEjw)** (Яндекс Диск, 255 КБ). В нём только русский текст, файлов игры нет.
+2. Распакуйте его в папку проекта, чтобы появился файл `translation\vp_russian.json`.
+3. Установите [Python 3](https://www.python.org/) и [7-Zip](https://www.7-zip.org/), затем выполните в папке проекта:
+   ```bash
+   python tools/make_russian_bnl.py
+   ```
+4. В лаунчере выберите **Настройки → Язык текста → Русский**.
 
-```bash
-python tools/make_russian_bnl.py --pc-ru "<ПК-игра>/bundles/english.bnl" --pc-en "<ПК-игра>/Install_Rus/backup/bundles/english.bnl"
-```
+Если у вас есть ПК-версия с установленным переводом ZoG, тот же файл собирается и из неё: `python tools/make_russian_bnl.py --pc-ru "<ПК-игра>/bundles/english.bnl" --pc-en "<ПК-игра>/Install_Rus/backup/bundles/english.bnl"`.
 
-В лаунчере выберите **Настройки → Язык текста → Русский**. Переведено 12 446 строк из 12 460, на английском остаются только титры. Вернуться к английскому можно в любой момент.
+Переведено 12 446 строк из 12 460, на английском остаются только титры. Вернуться к английскому можно в любой момент.
 
 ## Управление
 

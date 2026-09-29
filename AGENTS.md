@@ -103,17 +103,19 @@ Command-line flags:
 
 ### 1.7 Optional: Russian language
 
-Requirements:
-- the **PC version** of Viva Piñata (2007) with the ZoG Team translation installed (`VivaPinata_Rus_Setup.exe` from zoneofgames.ru, "SerGEAnt's Zone Of Games"). That leaves two files: `<PC>\bundles\english.bnl` (Russian) and `<PC>\Install_Rus\backup\bundles\english.bnl` (the original backup);
-- Python 3 and 7-Zip.
-
-Without the PC version the Russian language is not possible.
+The translation is the ZoG Team translation of the PC version (zoneofgames.ru), distributed with the team's permission as a pack that holds only the Russian strings: **[VivaPinata_Russian_v1.zip](https://disk.yandex.ru/d/9lgjQVp7fArEjw)** on Yandex Disk (261 269 bytes, MD5 `240c0a660a9673069ca221b569331091`). It is not game data; ask the user before downloading it. Needs Python 3 and 7-Zip.
 
 ```powershell
 cd C:\Games\VivaPinataRecomp
-python tools\make_russian_bnl.py --pc-ru "<PC>\bundles\english.bnl" --pc-en "<PC>\Install_Rus\backup\bundles\english.bnl"
-# expected: "...russian.bnl: 12446 strings translated, 14 left in English ..." (about 30 s)
+$api = 'https://cloud-api.yandex.net/v1/disk/public/resources/download?public_key=' + [uri]::EscapeDataString('https://disk.yandex.ru/d/9lgjQVp7fArEjw')
+Invoke-WebRequest (Invoke-RestMethod $api).href -OutFile $env:TEMP\VivaPinata_Russian_v1.zip
+(Get-FileHash $env:TEMP\VivaPinata_Russian_v1.zip -Algorithm MD5).Hash   # expected 240C0A660A9673069CA221B569331091
+Expand-Archive $env:TEMP\VivaPinata_Russian_v1.zip -DestinationPath . -Force   # -> translation\vp_russian.json
+python tools\make_russian_bnl.py
+# expected: "...russian.bnl: 11415 strings translated, 0 left in English ..." (about 30 s)
 ```
+
+Alternatively, with the **PC version** of Viva Piñata (2007) and the ZoG translation installed (`VivaPinata_Rus_Setup.exe`): `python tools\make_russian_bnl.py --pc-ru "<PC>\bundles\english.bnl" --pc-en "<PC>\Install_Rus\backup\bundles\english.bnl"` builds the same file.
 
 Then in the launcher choose **Settings → Game text language → Russian** (RU UI: **Настройки → Язык текста → Русский**) and press **PLAY**. The launcher copies `russian.bnl` over `english.bnl` and `englishus.bnl` (the game reads `englishus.bnl`) and keeps SHA-1-checked `.orig` backups. Choosing English restores them.
 

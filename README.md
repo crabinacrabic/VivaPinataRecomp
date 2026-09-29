@@ -50,7 +50,7 @@ Other editions have not been tested and will probably not start. *Viva Piñata: 
 1. Install an AI assistant that can run commands on your computer, for example [Claude Code](https://claude.com/claude-code), OpenAI Codex or Cursor.
 2. Paste this message into it, with the real path to your ISO:
 
-   > Install Viva Piñata Recomp on this PC: https://github.com/crabinacrabic/VivaPinataRecomp — follow AGENTS.md from that repository. My game disc image is at `C:\path\to\Viva Pinata.iso`. I also want the Russian language: no / yes, the PC version with the ZoG translation is at `C:\path\to\Viva Pinata PC`.
+   > Install Viva Piñata Recomp on this PC: https://github.com/crabinacrabic/VivaPinataRecomp — follow AGENTS.md from that repository. My game disc image is at `C:\path\to\Viva Pinata.iso`. I also want the Russian language: no / yes.
 
 3. The agent downloads and checks everything. When it asks, click through the Visual Studio installer and press **Build** in Visual Studio.
 4. When it is done, double-click **`run_game.bat`** in the project folder.
@@ -81,18 +81,19 @@ Other editions have not been tested and will probably not start. *Viva Piñata: 
 
 ## Russian language
 
-The Xbox disc has no Russian. This project can move the fan translation of the **PC version** by **ZoG Team** ([zoneofgames.ru](https://www.zoneofgames.ru/)) onto the Xbox game. The translation is not stored here: it is built from your own files. You need:
-- the PC version of Viva Piñata with the ZoG translation (`VivaPinata_Rus_Setup.exe`) installed;
-- [7-Zip](https://www.7-zip.org/);
-- [Python 3](https://www.python.org/).
+The Xbox disc has no Russian. This project moves the fan translation of the **PC version** by **ZoG Team** ([zoneofgames.ru](https://www.zoneofgames.ru/)) onto the Xbox game, with the team's permission. The translation is not stored in this repository.
 
-Then run:
+1. Download **[VivaPinata_Russian_v1.zip](https://disk.yandex.ru/d/9lgjQVp7fArEjw)** (Yandex Disk, 255 KB). It holds only the Russian text, no game files.
+2. Unzip it into the project folder, so that `translation\vp_russian.json` appears.
+3. Install [Python 3](https://www.python.org/) and [7-Zip](https://www.7-zip.org/), then run in the project folder:
+   ```bash
+   python tools/make_russian_bnl.py
+   ```
+4. In the launcher, choose **Settings → Game text language → Russian**.
 
-```bash
-python tools/make_russian_bnl.py --pc-ru "<PC game>/bundles/english.bnl" --pc-en "<PC game>/Install_Rus/backup/bundles/english.bnl"
-```
+If you have the PC version with the ZoG translation installed, `python tools/make_russian_bnl.py --pc-ru "<PC game>/bundles/english.bnl" --pc-en "<PC game>/Install_Rus/backup/bundles/english.bnl"` builds the same file from it.
 
-In the launcher, choose **Settings → Game text language → Russian**. 12 446 of 12 460 strings are translated; only the credits stay in English. You can switch back to English at any time.
+12 446 of 12 460 strings are translated; only the credits stay in English. You can switch back to English at any time.
 
 ## Controls
 
