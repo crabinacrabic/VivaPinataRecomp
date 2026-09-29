@@ -26,3 +26,5 @@ captures/
 settings/launcher.toml
 # Python bytecode
 __pycache__/
+# translation pack for players (Russian text by ZoG Team): distributed separately
+translation/vp_russian.json

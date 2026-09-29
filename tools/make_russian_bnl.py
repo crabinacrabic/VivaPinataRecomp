@@ -42,9 +42,14 @@ english.bnl and englishus.bnl share one schema, so the launcher installs the
 result over both (keeping .orig backups).
 
 Usage:
+  python tools/make_russian_bnl.py
+      with the translation pack at translation/vp_russian.json (the Russian
+      strings only, downloaded separately; no PC version needed), or
   python tools/make_russian_bnl.py --pc-ru "<PC>/bundles/english.bnl" ^
       --pc-en "<PC>/Install_Rus/backup/bundles/english.bnl"
+      from the PC version with the ZoG translation installed.
 Writes game_files/Beta/bundles/russian.bnl and russian_report.txt.
+--export-pack FILE writes the translation pack from an existing russian.bnl.
 Exit 0 on success, 1 on error.
 """
 
@@ -53,6 +58,7 @@ from __future__ import annotations
 import argparse
 import difflib
 import hashlib
+import json
 import re
 import shutil
 import struct
@@ -69,6 +75,13 @@ BUNDLES = ROOT / "game_files" / "Beta" / "bundles"
 MAGIC = b"CAFF07.08.06.003"
 # game_files/Beta/bundles/english.bnl from the tested disc (README).
 X360_ENGLISH_SHA1 = "093795895fbe38e9faeeca85f5c1532067fd0ae0"
+
+PACK = ROOT / "translation" / "vp_russian.json"
+PACK_FORMAT = "vp-russian-1"
+PACK_CREDITS = [
+    "Russian translation: ZoG Team (zoneofgames.ru), Viva Pinata (PC, 2007), used with the team's permission",
+    "Ported to the Xbox 360 version, plus Xbox-only lines: Viva Pinata Recomp",
+]
 
 
 class Caff:
@@ -412,10 +425,84 @@ def compress_exact(data: bytes, size: int) -> bytes | None:
     return None
 
 
+def layout(blocks) -> list[list[tuple[int, int, int]]]:
+    return [[(h, a, n) for h, a, n, _ in b] for b in blocks]
+
+
+# --- translation pack ---------------------------------------------------------
+# The file players download: only the Russian strings, keyed by block and string
+# index plus a CRC32 of the English string (no game text). With it, russian.bnl
+# is built from the player's own english.bnl; the PC version is not needed.
+
+def en_crc(en: str) -> str:
+    return f"{zlib.crc32(en.encode('utf-8')):08x}"
+
+
+def export_pack(x360: Caff, russian_path: Path, pack_path: Path) -> int:
+    try:
+        ru = Caff(russian_path)
+    except (OSError, ValueError) as e:
+        print(f"error: {e} (build russian.bnl first)", file=sys.stderr)
+        return 1
+    x_blocks, ru_blocks = parse_blocks(x360.text, True), parse_blocks(ru.text, True)
+    if layout(x_blocks) != layout(ru_blocks):
+        print("error: russian.bnl does not match this english.bnl", file=sys.stderr)
+        return 1
+    strings = []
+    for bi, (xb, rb) in enumerate(zip(x_blocks, ru_blocks)):
+        for si, ((_, _, _, en), (_, _, _, r)) in enumerate(zip(xb, rb)):
+            if body(en) and body(r) != body(en):
+                strings.append({"b": bi, "s": si, "crc": en_crc(body(en)), "ru": body(r)})
+    pack = {
+        "format": PACK_FORMAT,
+        "game": "Viva Pinata (Xbox 360), Title ID 4D5307F2",
+        "source": "Beta/bundles/english.bnl",
+        "source_sha1": X360_ENGLISH_SHA1,
+        "credits": PACK_CREDITS,
+        "strings": strings,
+    }
+    pack_path.parent.mkdir(parents=True, exist_ok=True)
+    pack_path.write_text(json.dumps(pack, ensure_ascii=False, indent=1) + "\n", encoding="utf-8", newline="\n")
+    print(f"{pack_path}: {len(strings)} Russian strings")
+    return 0
+
+
+def text_from_pack(pack_path: Path, x_blocks, x_text: bytes):
+    """Writes the pack's strings into a copy of the Xbox text stream."""
+    pack = json.loads(pack_path.read_text(encoding="utf-8"))
+    if not isinstance(pack, dict) or pack.get("format") != PACK_FORMAT:
+        raise ValueError(f"{pack_path}: not a {PACK_FORMAT} translation pack")
+    out = bytearray(x_text)
+    stats: Counter[str] = Counter()
+    mismatched: list[str] = []
+    for s in pack.get("strings", []):
+        b, i, ru = s.get("b"), s.get("s"), s.get("ru", "")
+        if not (isinstance(b, int) and 0 <= b < len(x_blocks) and isinstance(i, int) and 0 <= i < len(x_blocks[b])):
+            stats["mismatch"] += 1
+            mismatched.append(f"block {b} string {i}: not in this english.bnl")
+            continue
+        _, a, n, en = x_blocks[b][i]
+        if en_crc(body(en)) != s.get("crc"):
+            stats["mismatch"] += 1
+            mismatched.append(f"block {b} string {i}: different English text")
+            continue
+        if len(ru) + 1 > n:
+            stats["too_long"] += 1
+            mismatched.append(f"block {b} string {i}: too long for its slot")
+            continue
+        out[a:a + 2 * n] = (ru + " " * (n - 1 - len(ru)) + "\x00").encode("utf-16-be")
+        stats["pack"] += 1
+    return bytes(out), stats, mismatched
+
+
 def main() -> int:
     ap = argparse.ArgumentParser(description=__doc__.split("\n")[0])
-    ap.add_argument("--pc-ru", required=True, type=Path, help="PC english.bnl with the ZoG translation")
-    ap.add_argument("--pc-en", required=True, type=Path, help="original PC english.bnl (installer backup)")
+    ap.add_argument("--pc-ru", type=Path, help="PC english.bnl with the ZoG translation")
+    ap.add_argument("--pc-en", type=Path, help="original PC english.bnl (installer backup)")
+    ap.add_argument("--pack", type=Path,
+                    help=f"build from a translation pack instead (default: {PACK} when --pc-ru/--pc-en are not given)")
+    ap.add_argument("--export-pack", type=Path, metavar="FILE",
+                    help="write the translation pack from an existing russian.bnl (--out) and exit")
     ap.add_argument("--x360", type=Path, help="Xbox english.bnl (default: english.bnl.orig or english.bnl)")
     ap.add_argument("--out", type=Path, default=BUNDLES / "russian.bnl")
     args = ap.parse_args()
@@ -424,27 +511,52 @@ def main() -> int:
     if x360_path is None:
         orig = BUNDLES / "english.bnl.orig"
         x360_path = orig if orig.exists() else BUNDLES / "english.bnl"
-
     try:
-        pc_ru, pc_en, x360 = Caff(args.pc_ru), Caff(args.pc_en), Caff(x360_path)
+        x360 = Caff(x360_path)
     except (OSError, ValueError) as e:
         print(f"error: {e}", file=sys.stderr)
         return 1
-    if pc_ru.big or pc_en.big or not x360.big:
-        print("error: expected two PC (little-endian) files and one Xbox 360 file", file=sys.stderr)
+    if not x360.big:
+        print(f"error: {x360_path} is not an Xbox 360 file", file=sys.stderr)
         return 1
     if hashlib.sha1(x360.raw).hexdigest() != X360_ENGLISH_SHA1:
         print(f"warning: {x360_path} is not the tested english.bnl; continuing", file=sys.stderr)
-
-    ru_blocks = parse_blocks(pc_ru.text, False)
-    en_blocks = parse_blocks(pc_en.text, False)
     x_blocks = parse_blocks(x360.text, True)
-    layout = lambda bl: [[(h, a, n) for h, a, n, _ in b] for b in bl]
-    if layout(ru_blocks) != layout(en_blocks):
-        print("error: the two PC files do not share a layout (wrong backup?)", file=sys.stderr)
-        return 1
 
-    out, stats, untranslated = build_text(en_blocks, ru_blocks, x_blocks, x360.text)
+    if args.export_pack:
+        return export_pack(x360, args.out, args.export_pack)
+
+    pack = args.pack
+    if pack is None and not (args.pc_ru or args.pc_en) and PACK.exists():
+        pack = PACK
+    if pack is not None:
+        print(f"using the translation pack {pack}")
+        try:
+            out, stats, untranslated = text_from_pack(pack, x_blocks, x360.text)
+        except (OSError, ValueError) as e:
+            print(f"error: {e}", file=sys.stderr)
+            return 1
+        if stats["mismatch"]:
+            print(f"warning: {stats['mismatch']} pack strings do not match this english.bnl", file=sys.stderr)
+    else:
+        if not (args.pc_ru and args.pc_en):
+            print(f"error: give --pc-ru and --pc-en (the PC version with the ZoG translation), "
+                  f"or put the translation pack at {PACK}", file=sys.stderr)
+            return 1
+        try:
+            pc_ru, pc_en = Caff(args.pc_ru), Caff(args.pc_en)
+        except (OSError, ValueError) as e:
+            print(f"error: {e}", file=sys.stderr)
+            return 1
+        if pc_ru.big or pc_en.big:
+            print("error: --pc-ru and --pc-en must be PC (little-endian) files", file=sys.stderr)
+            return 1
+        ru_blocks = parse_blocks(pc_ru.text, False)
+        en_blocks = parse_blocks(pc_en.text, False)
+        if layout(ru_blocks) != layout(en_blocks):
+            print("error: the two PC files do not share a layout (wrong backup?)", file=sys.stderr)
+            return 1
+        out, stats, untranslated = build_text(en_blocks, ru_blocks, x_blocks, x360.text)
 
     packed = compress_exact(out, x360.text_size)
     if packed is None:
@@ -464,7 +576,7 @@ def main() -> int:
         f.write(f"source: {x360_path}\n{dict(stats)}\n\nNot translated ({len(untranslated)}):\n")
         for s in untranslated:
             f.write(s.replace("\n", "\\n") + "\n")
-    done = sum(v for k, v in stats.items() if k not in ("untranslated", "too_long"))
+    done = sum(v for k, v in stats.items() if k not in ("untranslated", "too_long", "mismatch"))
     print(f"{args.out}: {done} strings translated, {len(untranslated)} left in English "
           f"({dict(stats)}); list in {report.name}")
     return 0
