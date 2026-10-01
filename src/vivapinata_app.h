@@ -27,6 +27,7 @@
 #include "game_timing.h"
 #include "launcher.h"
 #include "utils.h"
+#include "vp_tools/crash_log.h"
 #include "vp_tools/tools_dialog.h"
 
 class VivapinataApp : public rex::ReXApp
@@ -161,6 +162,10 @@ public:
     // Second config pass: GPU-backend cvars (vsync, resolution_scale,
     // render_target_path_d3d12...) are registered by now.
     utils::LoadSettingsFiles();
+
+    // Names the guest code behind a bad guest memory access in the log
+    // (the SDK reports only the address).
+    vp_tools::CrashLog::Install();
 
     // No guest pad input while the VP Tools menu is open; otherwise the SDK's
     // usual checks (window focus, ImGui not using the mouse). Same scheme as
