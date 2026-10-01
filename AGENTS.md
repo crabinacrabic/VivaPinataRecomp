@@ -91,7 +91,7 @@ The launcher UI is in English or Russian. It follows the Windows UI language (`v
 | Launcher (EN / RU) | Meaning |
 | :-- | :-- |
 | **PLAY** / **ИГРАТЬ**, or `Enter` | Start the game |
-| **Settings** / **Настройки** | Game text language, fullscreen, V-Sync, render resolution, render mode (ROV = accurate / RTV = faster), precise timer, launcher language |
+| **Settings** / **Настройки** | Game text language, fullscreen, V-Sync, render resolution, render mode (**Fast** = RTV + fast readback, the default / **Accurate** = ROV + full readback: exact, but about half the frame rate on AMD), precise timer, launcher language |
 | **Quit** / **Выход** | Close |
 | **Show at startup** / **Показывать при запуске** | `vp_show_launcher` |
 | Status line | green = correct game found; yellow = other `default.xex`; red = game files missing |
@@ -153,7 +153,7 @@ The maintainer builds and runs everything in Visual Studio. The maintainer's wor
    - `config\*.toml`: function boundaries, hooks, `[[midasm_hook]]` instruction-level hooks.
 3. After editing the manifest or `config\*.toml`, run `python tools\validate_manifest.py` before building.
 4. Push only when the user asks. Never commit game files or `russian.bnl`.
-5. Default settings stay authentic: 30 FPS, `resolution_scale = 1`, D3D12 ROV + readback resolve, no MSAA, XInput.
+5. Default settings: 30 FPS, `resolution_scale = 1`, D3D12 RTV + `readback_resolve = "fast"`, no MSAA, XInput. ROV + full readback is the launcher's "Accurate" mode, not the default: on an RX 6600 it holds the game at 13–15 ticks/s instead of 30 (GPU-bound; check with `Get-Counter "\GPU Engine(*)\Utilization Percentage"`).
 
 ### 2.2 Map
 

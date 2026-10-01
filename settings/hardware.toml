@@ -5,9 +5,13 @@
 # Precedence: --flag (CLI) > REX_FLAG (env) > this file > compiled default.
 # The in-game Settings overlay (F4) "Save to config" rewrites this file.
 #
-# Retro standard (KB ROOT_INDEX.rules.retro_standards): native 720p, no
-# supersampling, ROV render-target path + readback resolve, MSAA off,
-# XInput. Viva Pinata is a 30 FPS title - no fps unlock by default.
+# Native 720p, no supersampling, MSAA off, XInput. Viva Pinata is a 30 FPS
+# title - no fps unlock by default.
+#
+# Render mode: RTV + fast resolve readback by default. ROV + full readback
+# (the exact Xbox 360 EDRAM emulation) is the launcher's "Accurate" mode: on an
+# RX 6600 it kept the GPU at 99% and the game at 13-15 ticks/s instead of 30
+# (RTV + fast: 29.6, GPU 62%; measured 2026-10-01 with the VP Tools tick graph).
 
 gpu_plugin = "xenos"
 graphics_backend = "d3d12"
@@ -34,9 +38,9 @@ fullscreen = false
 monitor = 0
 resolution = "1280x720"
 
-render_target_path_d3d12 = "rov"
-readback_resolve = "full"
-d3d12_readback_resolve = true
+render_target_path_d3d12 = "rtv"
+readback_resolve = "fast"
+d3d12_readback_resolve = false
 gamma_render_target_as_unorm16 = true
 
 store_shaders = true

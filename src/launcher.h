@@ -412,7 +412,21 @@ namespace vp_launcher
   inline const ImVec4 kQuitColor(0.30f, 0.32f, 0.36f, 1.0f);
   inline const ImVec4 kSwitchColor(0.10f, 0.12f, 0.11f, 0.75f);
 
-  inline constexpr const char *kPathValues[] = {"rov", "rtv", ""};
+  // Render modes: each sets the render-target path and the resolve readback
+  // together. Measured on an RX 6600 in the garden (2026-10-01): ROV + full
+  // readback 13-15 game ticks/s (GPU 99%), RTV + fast readback 29.6 (the game's
+  // 30, GPU 62%). ROV emulates the Xbox 360 EDRAM in a pixel shader and is
+  // exact but heavy, slowest on AMD; RTV uses the PC GPU's own render targets.
+  struct RenderMode
+  {
+    const char *path;            // render_target_path_d3d12
+    const char *readback;        // readback_resolve
+    const char *d3d12_readback;  // d3d12_readback_resolve (legacy alias, kept in step)
+  };
+  inline constexpr RenderMode kRenderModes[] = {
+      {"rtv", "fast", "false"},  // fast
+      {"rov", "full", "true"},   // accurate
+  };
 
   // ---------------------------------------------------------------------------
   // UI text (English / Russian)
@@ -449,7 +463,8 @@ namespace vp_launcher
     const char *resolution;
     const char *scale[3];
     const char *render_mode;
-    const char *path[3];
+    const char *path[2];
+    const char *path_note;
     const char *precise_timer;
     const char *launcher_language;
     const char *language_auto;
@@ -484,7 +499,8 @@ namespace vp_launcher
       .resolution = "Render resolution",
       .scale = {"×1 — 1280×720, like the Xbox 360", "×2 — 2560×1440", "×3 — 3840×2160"},
       .render_mode = "Render mode",
-      .path = {"ROV — accurate, recommended", "RTV — faster", "Auto — chosen by the SDK"},
+      .path = {"Fast (RTV) — full speed, slightly less accurate", "Accurate (ROV) — exact Xbox 360 picture, slow"},
+      .path_note = "Fast is recommended. Accurate can halve the frame rate, most of all on AMD cards.",
       .precise_timer = "Precise system timer (1 ms)",
       .launcher_language = "Launcher language",
       .language_auto = "Auto (Windows language)",
@@ -519,7 +535,8 @@ namespace vp_launcher
       .resolution = "Разрешение рендера",
       .scale = {"×1 — 1280×720, как на Xbox 360", "×2 — 2560×1440", "×3 — 3840×2160"},
       .render_mode = "Режим рендера",
-      .path = {"ROV — точнее, рекомендуется", "RTV — быстрее", "Авто — выбор SDK"},
+      .path = {"Быстрый (RTV) — полная скорость, чуть менее точный", "Точный (ROV) — картинка как на Xbox 360, медленный"},
+      .path_note = "Рекомендуется быстрый. Точный может вдвое снизить частоту кадров, сильнее всего на картах AMD.",
       .precise_timer = "Точный системный таймер (1 мс)",
       .launcher_language = "Язык лаунчера",
       .language_auto = "Авто (язык Windows)",
@@ -823,17 +840,10 @@ namespace vp_launcher
       }
     }
 
-    static int PathIndex(const std::string &value)
+    // ROV only when asked for explicitly; RTV and "" (SDK choice) show as Fast.
+    static int RenderModeIndex(const std::string &path)
     {
-      if (value == "rov")
-      {
-        return 0;
-      }
-      if (value == "rtv")
-      {
-        return 1;
-      }
-      return 2;
+      return path == "rov" ? 1 : 0;
     }
 
     void DrawOptions(ImGuiIO &io)
@@ -904,11 +914,21 @@ namespace vp_launcher
 
         ImGui::SeparatorText(ui.section_graphics);
         ImGui::TextUnformatted(ui.render_mode);
-        int path_index = PathIndex(rex::cvar::Query<std::string>("render_target_path_d3d12"));
-        ImGui::SetNextItemWidth(kItemWidth);
-        if (ImGui::Combo("##render_target_path", &path_index, ui.path, IM_ARRAYSIZE(ui.path)))
+        int mode = RenderModeIndex(rex::cvar::Query<std::string>("render_target_path_d3d12"));
+        constexpr float kModeWidth = 500.0f;  // the mode names are long
+        ImGui::SetNextItemWidth(kModeWidth);
+        if (ImGui::Combo("##render_mode", &mode, ui.path, IM_ARRAYSIZE(ui.path)))
         {
-          settings_.Set("render_target_path_d3d12", std::string("\"") + kPathValues[path_index] + "\"");
+          const RenderMode &m = kRenderModes[mode];
+          settings_.Set("render_target_path_d3d12", std::string("\"") + m.path + "\"");
+          settings_.Set("readback_resolve", std::string("\"") + m.readback + "\"");
+          settings_.Set("d3d12_readback_resolve", m.d3d12_readback);
+        }
+        {
+          FontScope caption(fonts.caption);
+          ImGui::PushTextWrapPos(ImGui::GetCursorPosX() + kModeWidth);
+          ImGui::TextDisabled("%s", ui.path_note);
+          ImGui::PopTextWrapPos();
         }
 
         ImGui::SeparatorText(ui.section_system);
