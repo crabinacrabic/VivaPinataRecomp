@@ -15,6 +15,7 @@
 
 #include <rex/cvar.h>
 #include <rex/input/flags.h>
+#include <rex/input/input_system.h>
 #include <rex/logging.h>
 #include <rex/memory/utils.h>
 #include <rex/rex_app.h>
@@ -26,6 +27,7 @@
 #include "game_timing.h"
 #include "launcher.h"
 #include "utils.h"
+#include "vp_tools/tools_dialog.h"
 
 class VivapinataApp : public rex::ReXApp
 {
@@ -147,11 +149,36 @@ public:
     // address is verified against this XEX).
   }
 
+  // VP Tools menu (src/vp_tools/tools_dialog.h): stays registered and draws
+  // nothing until F1 / a Back hold opens it in the game.
+  void OnCreateDialogs(rex::ui::ImGuiDrawer *drawer) override
+  {
+    tools_ = std::make_unique<vp_tools::ToolsDialog>(drawer, window());
+  }
+
   void OnPostSetup() override
   {
     // Second config pass: GPU-backend cvars (vsync, resolution_scale,
     // render_target_path_d3d12...) are registered by now.
     utils::LoadSettingsFiles();
+
+    // No guest pad input while the VP Tools menu is open; otherwise the SDK's
+    // usual checks (window focus, ImGui not using the mouse). Same scheme as
+    // ReTiP's RetipApp::OnPostSetup.
+    if (auto *input = static_cast<rex::input::InputSystem *>(runtime()->input_system()))
+    {
+      input->SetActiveCallback([this]() {
+        if (vp_tools::g_menu_open)
+        {
+          return false;
+        }
+        if (window() && !window()->HasFocus())
+        {
+          return false;
+        }
+        return !imgui_drawer() || !imgui_drawer()->GetIO().WantCaptureMouse;
+      });
+    }
 
     if (REXCVAR_GET(vp_high_res_timer))
     {
@@ -172,6 +199,7 @@ public:
   void OnShutdown() override
   {
     launcher_.reset();
+    tools_.reset();
     if (REXCVAR_GET(vp_high_res_timer))
     {
       vp_timing::DisableHighResTimer();
@@ -181,7 +209,6 @@ public:
   // Available for later phases:
   // void OnPostInitLogging() override {}
   // void OnLoadXexImage(std::string& xex_image) override {}   // default: game:\default.xex
-  // void OnCreateDialogs(rex::ui::ImGuiDrawer* drawer) override {}
   // void OnPreLaunchModule() override {}                        // last chance to patch guest memory
   // void OnPostLaunchModule(rex::system::XThread* thread) override {}
   // std::unique_ptr<rex::ui::ImGuiDialog> CreateAchievementsOverlay() override;
@@ -195,4 +222,5 @@ private:
   }
 
   std::unique_ptr<vp_launcher::LauncherDialog> launcher_;
+  std::unique_ptr<vp_tools::ToolsDialog> tools_;
 };

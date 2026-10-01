@@ -8,7 +8,8 @@
 //   3. game_fixes.h     - ALL guest overrides. Strong `extern "C" sub_X`
 //                         symbols replace the weak generated aliases at link
 //                         time, so this header must be compiled exactly once.
-//   4. app header       - ReXApp subclass + REX_DEFINE_APP entry point.
+//   4. vp_tools/hooks.h - VP Tools engine hooks (strong sub_X too, same rule).
+//   5. app header       - ReXApp subclass + REX_DEFINE_APP entry point.
 
 #include <cmath>
 
@@ -38,6 +39,7 @@ double roundeven(double x) {
 
 #include "generated/default/vivapinata_init.h"
 #include "game_fixes.h"
+#include "vp_tools/hooks.h"
 
 #include "vivapinata_app.h"
 
