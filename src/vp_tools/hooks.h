@@ -3,12 +3,18 @@
 // Included once, from src/main.cpp, after game_fixes.h (strong extern "C"
 // sub_X symbols replace the weak generated aliases; see game_fixes.h).
 //
-// Stage 0/1: every hook only records its arguments and calls the original
-// body, so the game behaves exactly as before. The records feed the menu's
-// Trace tab and, with --vp_tools_trace=true, the log. They verify the
-// function matches in docs/NAMES_FROM_TIP.md: "high" matches from
-// src/vp_names.h, and a few lower-graded candidates (marked with ?).
+// Every hook records its arguments and calls the original body, so the game
+// behaves as before. The records feed the menu (Garden, Trace tabs) and, with
+// --vp_tools_trace=true, the log. One hook also acts: appMainTickPreDraw
+// carries out the spawn requests queued by the menu, on the game thread.
+//
+// Matches checked in game (2026-10-01 trace): appMainTickPreDraw ~30 calls/s,
+// supportPinataCreateGeneralEx with TiP's arguments. Ruled out: sub_82106ED0
+// and sub_82171680 (gardenMainGetGardenScene / avatarPosGet by code only).
 #pragma once
+
+#include <algorithm>
+#include <chrono>
 
 #include <rex/cvar.h>
 #include <rex/hook.h>
@@ -19,10 +25,19 @@
 #include "vp_tools/memory_scan.h"
 #include "vp_tools/state.h"
 
-// Candidates graded medium/low in docs/NAMES_FROM_TIP.md: traced only.
-#define VP_CAND_gardenMainGetGardenScene sub_82106ED0
-#define VP_CAND_avatarPosGet sub_82171680
+// Found by hand (not graded by tools/port_names.py):
+//   cursorCameraTick       same call sequence as TiP 0x822C1E88 (meCursorCam*
+//                          calls, then the same four matched functions);
+//                          (camera r3, controls r4, pos r5, rot r6)
+//   gardenMainGetGardenScene(id)  the garden-slot lookup; its only caller
+//                          passes id 1, TiP's version hard-codes 1
+//   credits candidate      code only, verify (TiP playerMain +4/+16/+20)
+#define VP_FN_cursorCameraTick sub_821DF590
+#define VP_IMP_cursorCameraTick __imp__sub_821DF590
+#define VP_FN_gardenMainGetGardenSceneById sub_82106E40
+#define VP_IMP_gardenMainGetGardenSceneById __imp__sub_82106E40
 #define VP_CAND_playerMainUpdateHighestAndLowestCredits sub_82429D50
+#define VP_CAND_IMP_playerMainUpdateHighestAndLowestCredits __imp__sub_82429D50
 
 namespace vp_tools
 {
@@ -57,6 +72,19 @@ namespace vp_tools
     return f;
   }
 
+  inline void StoreBE32(uint8_t *base, uint32_t addr, uint32_t value)
+  {
+    const uint32_t v = __builtin_bswap32(value);
+    std::memcpy(base + addr, &v, sizeof(v));
+  }
+
+  inline void StoreBEFloat(uint8_t *base, uint32_t addr, float value)
+  {
+    uint32_t v;
+    std::memcpy(&v, &value, sizeof(v));
+    StoreBE32(base, addr, v);
+  }
+
   inline void RecordCall(TraceId id, const Entry &entry, uint32_t result, const uint32_t *extra = nullptr)
   {
     uint64_t n;
@@ -81,11 +109,13 @@ namespace vp_tools
                   extra ? extra[0] : 0, extra ? extra[1] : 0, extra ? extra[2] : 0);
     }
   }
+
+  inline void ServiceSpawnRequests(PPCContext &ctx, uint8_t *base);
 }  // namespace vp_tools
 
 // supportPinataCreateGeneralEx(scene r3, pos r4, rot r5, tag r7, r9, r10,
 // scale f1, age f2) -> entity. Same arguments as in TiP (checked by comparing
-// the code of both games).
+// the code of both games); r6 and r8 are not inputs (overwritten on entry).
 REX_HOOK_RAW(VP_FN_supportPinataCreateGeneralEx)
 {
   vp_tools::SpawnCall call;
@@ -121,7 +151,7 @@ REX_HOOK_RAW(VP_FN_supportPinataCreateGeneralEx)
     }
     n = log.count;
   }
-  if (n <= 20 && REXCVAR_GET(vp_tools_trace))
+  if ((n <= 20 || call.caller == vp_tools::kToolsCaller) && REXCVAR_GET(vp_tools_trace))
   {
     REXLOG_INFO("[vp_tools] supportPinataCreateGeneralEx call {} from 0x{:08X}: scene=0x{:08X} "
                 "pos=({:.1f}, {:.1f}, {:.1f}) rot=0x{:08X} tag={} r9={} r10={} scale={:.2f} age={:.2f} "
@@ -131,12 +161,30 @@ REX_HOOK_RAW(VP_FN_supportPinataCreateGeneralEx)
   }
 }
 
-// Once per game frame: the safe point for menu requests (stage 2).
+// Once per game frame, on the game thread: the safe point for menu requests.
 REX_HOOK_RAW(VP_FN_appMainTickPreDraw)
 {
   const vp_tools::Entry entry = vp_tools::OnEntry(ctx);
+  {
+    const auto now = std::chrono::steady_clock::now();
+    std::lock_guard lock(vp_tools::Mutex());
+    vp_tools::TickTimes &t = vp_tools::Ticks();
+    if (t.last != std::chrono::steady_clock::time_point{})
+    {
+      const float ms = std::chrono::duration<float, std::milli>(now - t.last).count();
+      t.interval_ms[t.count % t.interval_ms.size()] = ms;
+      ++t.count;
+      if (ms > vp_tools::TickTimes::kSlowMs)
+      {
+        ++t.slow;
+      }
+      t.worst_ms = std::max(t.worst_ms, ms);
+    }
+    t.last = now;
+  }
   VP_IMP_appMainTickPreDraw(ctx, base);
   vp_tools::RecordCall(vp_tools::kTraceTick, entry, ctx.r3.u32);
+  vp_tools::ServiceSpawnRequests(ctx, base);
 }
 
 REX_HOOK_RAW(VP_FN_requirementsMet)
@@ -146,18 +194,36 @@ REX_HOOK_RAW(VP_FN_requirementsMet)
   vp_tools::RecordCall(vp_tools::kTraceRequirements, entry, ctx.r3.u32);
 }
 
-REX_HOOK_RAW(VP_CAND_gardenMainGetGardenScene)
+// Keeps the cursor position (r5 -> 3 floats) and rotation pointer (r6).
+REX_HOOK_RAW(VP_FN_cursorCameraTick)
 {
   const vp_tools::Entry entry = vp_tools::OnEntry(ctx);
-  __imp__sub_82106ED0(ctx, base);
-  vp_tools::RecordCall(vp_tools::kTraceGardenScene, entry, ctx.r3.u32);
+  float pos[3] = {};
+  if (vp_tools::PlausibleGuestPointer(entry.args[2]))
+  {
+    for (int i = 0; i < 3; ++i)
+    {
+      pos[i] = vp_tools::SafeLoadFloat(entry.args[2] + 4 * i);
+    }
+  }
+  VP_IMP_cursorCameraTick(ctx, base);
+  {
+    std::lock_guard lock(vp_tools::Mutex());
+    vp_tools::CursorState &c = vp_tools::Cursor();
+    ++c.calls;
+    c.camera = entry.args[0];
+    c.pos_ptr = entry.args[2];
+    c.rot_ptr = entry.args[3];
+    std::memcpy(c.pos, pos, sizeof(pos));
+  }
+  vp_tools::RecordCall(vp_tools::kTraceCursorCam, entry, ctx.r3.u32);
 }
 
-REX_HOOK_RAW(VP_CAND_avatarPosGet)
+REX_HOOK_RAW(VP_FN_gardenMainGetGardenSceneById)
 {
   const vp_tools::Entry entry = vp_tools::OnEntry(ctx);
-  __imp__sub_82171680(ctx, base);
-  vp_tools::RecordCall(vp_tools::kTraceAvatarPos, entry, ctx.r3.u32);
+  VP_IMP_gardenMainGetGardenSceneById(ctx, base);
+  vp_tools::RecordCall(vp_tools::kTraceGardenScene, entry, ctx.r3.u32);
 }
 
 // TiP: playerMain in r3, credits at +4, experience at +16, level at +20.
@@ -171,6 +237,55 @@ REX_HOOK_RAW(VP_CAND_playerMainUpdateHighestAndLowestCredits)
     extra[1] = vp_tools::SafeLoad32(entry.args[0] + 16);
     extra[2] = vp_tools::SafeLoad32(entry.args[0] + 20);
   }
-  __imp__sub_82429D50(ctx, base);
+  VP_CAND_IMP_playerMainUpdateHighestAndLowestCredits(ctx, base);
   vp_tools::RecordCall(vp_tools::kTraceCredits, entry, ctx.r3.u32, extra);
 }
+
+namespace vp_tools
+{
+  // Calls supportPinataCreateGeneralEx for each queued request, from the
+  // appMainTickPreDraw hook (game thread, after the tick, before the draw).
+  // The position goes into a 0x200-byte block carved below the current guest
+  // stack pointer, so the callee's frame lands below it; the whole context is
+  // restored afterwards. ReTiP does the same from its gardenMainGetGardenScene
+  // hook (saves the context, sets r3/r4/r5/r7/r9/r10/f1/f2, restores).
+  inline void ServiceSpawnRequests(PPCContext &ctx, uint8_t *base)
+  {
+    std::vector<SpawnRequest> requests;
+    {
+      std::lock_guard lock(Mutex());
+      if (SpawnQueue().empty())
+      {
+        return;
+      }
+      requests.swap(SpawnQueue());
+    }
+    for (const SpawnRequest &r : requests)
+    {
+      if (!PlausibleGuestPointer(r.scene))
+      {
+        continue;
+      }
+      const PPCContext saved = ctx;
+      const uint32_t sp = (saved.r1.u32 - 0x200u) & ~0xFu;
+      const uint32_t pos_addr = sp + 0x180u;
+      StoreBE32(base, sp, saved.r1.u32);  // back chain
+      for (int i = 0; i < 3; ++i)
+      {
+        StoreBEFloat(base, pos_addr + 4 * i, r.pos[i]);
+      }
+      ctx.r1.u64 = sp;
+      ctx.lr = kToolsCaller;
+      ctx.r3.u64 = r.scene;
+      ctx.r4.u64 = pos_addr;
+      ctx.r5.u64 = 0;  // no rotation (the game passes 0 itself)
+      ctx.r7.u64 = r.tag;
+      ctx.r9.u64 = 0;
+      ctx.r10.u64 = r.r10;
+      ctx.f1.f64 = r.scale;
+      ctx.f2.f64 = r.age;
+      VP_FN_supportPinataCreateGeneralEx(ctx, base);  // through the hook: shows up in the spawn log
+      ctx = saved;
+    }
+  }
+}  // namespace vp_tools

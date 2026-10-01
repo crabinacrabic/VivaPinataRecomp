@@ -11,6 +11,7 @@
 #include <cstdint>
 #include <cstring>
 #include <mutex>
+#include <vector>
 
 namespace vp_tools
 {
@@ -32,12 +33,15 @@ namespace vp_tools
 
   // --- spawn trace (supportPinataCreateGeneralEx) -------------------------------
 
+  // Caller recorded for spawns made by the menu (the hook sets lr to it).
+  inline constexpr uint32_t kToolsCaller = 0;
+
   struct SpawnCall
   {
     uint32_t caller = 0;   // LR: guest address after the calling bl
     uint32_t scene = 0;    // r3
     uint32_t pos_ptr = 0;  // r4 -> 3 floats
-    uint32_t rot_ptr = 0;  // r5
+    uint32_t rot_ptr = 0;  // r5 (0 is allowed: the game passes 0 itself)
     uint32_t tag = 0;      // r7
     uint32_t r9 = 0;
     uint32_t r10 = 0;
@@ -61,6 +65,52 @@ namespace vp_tools
     return log;
   }
 
+  // --- spawn requests (menu -> game thread) -------------------------------------
+
+  // Queued by the menu, carried out by the appMainTickPreDraw hook on the game
+  // thread (ReTiP serviced its spawn request the same way, from a game hook).
+  struct SpawnRequest
+  {
+    uint32_t scene = 0;
+    uint32_t tag = 0;
+    float pos[3] = {};
+    float scale = 1.0f;
+    float age = 1.0f;
+    uint32_t r10 = 0;
+  };
+
+  inline std::vector<SpawnRequest> &SpawnQueue()
+  {
+    static std::vector<SpawnRequest> queue;
+    return queue;
+  }
+
+  // --- cursor (cursorCameraTick: camera r3, controls r4, pos r5, rot r6) --------
+
+  struct CursorState
+  {
+    uint64_t calls = 0;
+    uint32_t camera = 0;
+    uint32_t pos_ptr = 0;
+    uint32_t rot_ptr = 0;
+    float pos[3] = {};
+  };
+
+  inline CursorState &Cursor()
+  {
+    static CursorState c;
+    return c;
+  }
+
+  // --- garden table (read by sub_82106E40, the VP1 gardenMainGetGardenScene) ---
+
+  // Four 200-byte garden slots at 0x82A27CC0 + 140; slot +16 is the garden id
+  // (the game asks for id 1, as TiP's gardenMainGetGardenScene does), slot +4
+  // the scene. Plain reads, valid from any thread.
+  inline constexpr uint32_t kGardenSlots = 0x82A27CC0u + 140u;
+  inline constexpr uint32_t kGardenSlotsEnd = 0x82A27CC0u + 940u;
+  inline constexpr uint32_t kGardenSlotSize = 200u;
+
   // --- per-function call counters (verification of docs/NAMES_FROM_TIP.md) -----
 
   struct FnTrace
@@ -79,8 +129,8 @@ namespace vp_tools
   {
     kTraceTick,
     kTraceRequirements,
+    kTraceCursorCam,
     kTraceGardenScene,
-    kTraceAvatarPos,
     kTraceCredits,
     kTraceCount
   };
@@ -88,12 +138,33 @@ namespace vp_tools
   inline std::array<FnTrace, kTraceCount> &Traces()
   {
     static std::array<FnTrace, kTraceCount> t = {{
-        {"appMainTickPreDraw", "sub_82105528", "high"},
+        {"appMainTickPreDraw", "sub_82105528", "confirmed"},
         {"requirementsMet", "sub_823B09A8", "high"},
-        {"gardenMainGetGardenScene?", "sub_82106ED0", "low"},
-        {"avatarPosGet?", "sub_82171680", "medium"},
+        {"cursorCameraTick", "sub_821DF590", "call graph"},
+        {"gardenMainGetGardenScene(id)", "sub_82106E40", "code"},
         {"playerMainUpdateHighestAndLowestCredits?", "sub_82429D50", "low"},
     }};
+    return t;
+  }
+
+  // --- tick timing (stutter measurement) -----------------------------------------
+
+  // Time between appMainTickPreDraw calls, recorded on the game thread. The
+  // game targets 30 ticks/s (33 ms); a "slow" tick is one over 50 ms.
+  struct TickTimes
+  {
+    static constexpr size_t kSize = 300;  // 10 s at 30 ticks/s
+    static constexpr float kSlowMs = 50.0f;
+    std::array<float, kSize> interval_ms{};
+    uint64_t count = 0;
+    uint64_t slow = 0;
+    float worst_ms = 0.0f;
+    std::chrono::steady_clock::time_point last{};
+  };
+
+  inline TickTimes &Ticks()
+  {
+    static TickTimes t;
     return t;
   }
 
