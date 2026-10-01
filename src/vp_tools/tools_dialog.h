@@ -378,9 +378,12 @@ namespace vp_tools
   }
 
   // Tag classes: sub_823FCAC8 (TiP supportPinataTagClassify, identical code)
-  // binary-searches 39 {class, boundary} pairs at 0x826F7888. A tag below
+  // binary-searches {class, boundary} pairs at 0x826F7888. A tag below
   // boundary[i] (and above boundary[i-1]) has class[i]; a boundary itself
-  // and tag 1 are "unknown" (39).
+  // and tag 1 are "unknown" (39). The table has 38 pairs (last boundary 1903);
+  // the search's 39th slot is the data that follows. Read in game 2026-10-01:
+  // Animal 0-168, Money 863-874, Spade 972-973 (the game spawns 973),
+  // Cursor 1043-1045 (it spawns 1044/1045), ShopKeeper 1584-1594.
   struct TagRange
   {
     uint32_t first;
@@ -389,7 +392,7 @@ namespace vp_tools
   };
 
   inline constexpr uint32_t kTagClassTable = 0x826F7888u;
-  inline constexpr int kTagClassEntries = 39;
+  inline constexpr int kTagClassEntries = 38;
   inline constexpr uint32_t kTagClassCount = 38;
 
   // supportPinataTagClass_e from ReTiP's Types/VivaTags.h, without TiP's three
@@ -420,7 +423,7 @@ namespace vp_tools
           !MemoryScanner::Read32(kTagClassTable + 8 * i + 4, boundary) || boundary < 0 ||
           static_cast<uint32_t>(boundary) < first || static_cast<uint32_t>(cls) >= kTagClassCount)
       {
-        return {};  // not the table we expect
+        break;  // end of the table (or not the table we expect: then nothing was read)
       }
       if (static_cast<uint32_t>(boundary) > first)
       {

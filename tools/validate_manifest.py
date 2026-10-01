@@ -24,6 +24,7 @@ Usage:  python tools/validate_manifest.py [path/to/manifest.toml]
 
 from __future__ import annotations
 
+import re
 import sys
 from pathlib import Path
 
@@ -321,13 +322,24 @@ def cross_checks(m: Merged, manifest_dir: Path, rep: Report) -> None:
                 rep.warn(src, f"[functions] 0x{a:08X}.parent 0x{p:08X} is not listed; "
                               "codegen must discover it")
 
-    # midasm names must be unique (they become host symbols)
-    names: dict[str, int] = {}
+    # A midasm name is the host function called at that address, so one name may
+    # serve several addresses (the vpkd3d128 fix uses one at 30), as long as every
+    # use passes the same register kinds (the C++ signature) and the same outcome.
+    def midasm_shape(h: dict) -> tuple:
+        kinds = tuple(re.sub(r"\d+$", "", str(r)) for r in h.get("registers", []))
+        outcome = tuple(sorted(k for k in h if k in ("return", "return_on_true", "return_on_false",
+                                                     "jump_address", "jump_address_on_true",
+                                                     "jump_address_on_false")))
+        return kinds, outcome
+
+    names: dict[str, tuple[int, tuple]] = {}
     for a, (h, src) in m.midasm.items():
         n = h["name"]
-        if n in names:
-            rep.err(src, f"[[midasm_hook]] name '{n}' used at 0x{names[n]:08X} and 0x{a:08X}")
-        names[n] = a
+        shape = midasm_shape(h)
+        if n in names and names[n][1] != shape:
+            rep.err(src, f"[[midasm_hook]] name '{n}' at 0x{names[n][0]:08X} and 0x{a:08X} with different "
+                         f"registers/outcome {names[n][1]} vs {shape} (one C++ function cannot take both)")
+        names.setdefault(n, (a, shape))
 
     # function names must be unique too
     fnames: dict[str, int] = {}

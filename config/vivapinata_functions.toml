@@ -97,3 +97,80 @@
 0x823BE220 = {}   # LR=0x823BE424
 0x8217BB50 = {}   # LR=0x8217C3AC (recomp.39.cpp)
 0x823B13F8 = {}   # LR=0x823B0A8C (recomp.62.cpp: sub_823B09A8 garden initialization callback)
+
+# --- 2026-10-01: FATAL unregistered function 0x8230D918 on the title screen ---
+# Indirect call (`bctrl`) from sub_8234B080 (recomp.45.cpp:15079) into a 68-byte message
+# handler that sits between sub_8230D568 and sub_8230D960 and is in no function.
+# tools/find_code_gaps.py found all such code at once (gaps between functions that hold
+# instructions, read from the running game): empty virtual methods (`blr`), adjustor
+# thunks, virtual-call forwarders (`... mtctr; bctr`), small callbacks.
+0x820E14CC = {}   # 4 bytes after sub_820E14B0, first word 4E800020
+0x82105F60 = {}   # 4 bytes after sub_82105D68, first word 4E800020
+0x8212D53C = {}   # 4 bytes after sub_8212D520, first word 4E800020
+0x8216C6E8 = {}   # 4 bytes after sub_8216C640, first word 4E800020
+0x821CB648 = {}   # 32 bytes after sub_821CB628, first word 81630000
+0x821CB668 = {}   # 32 bytes after sub_821CB628, first word 81630000
+0x821CB688 = {}   # 32 bytes after sub_821CB628, first word 81630000
+0x821CB6C8 = {}   # 32 bytes after sub_821CB6A8, first word 81630000
+0x821CBD40 = {}   # 4 bytes after sub_821CBCF8, first word 4E800020
+0x821CBDA8 = {}   # addi r3,r3,-4; b - adjustor thunk after sub_821CBDA0
+0x821D2B4C = {}   # 4 bytes after sub_821D2AF8, first word 4E800020
+0x82250200 = {}   # 24 bytes after sub_82250048, first word 81630020
+0x822A1864 = {}   # 4 bytes after sub_822A1818, first word 4E800020
+0x822A18B4 = {}   # 4 bytes after sub_822A1868, first word 4E800020
+0x822A1904 = {}   # 4 bytes after sub_822A18B8, first word 4E800020
+0x822A19F4 = {}   # 4 bytes after sub_822A19A8, first word 4E800020
+0x822DCE90 = {}   # 4 bytes after sub_822DCE80, first word 4E800020
+0x822DF6D8 = {}   # 4 bytes after sub_822DF6C8, first word 4E800020
+0x822E0148 = {}   # 4 bytes after sub_822E0138, first word 4E800020
+0x822E4B88 = {}   # 4 bytes after sub_822E4B78, first word 4E800020
+0x822E7480 = {}   # 4 bytes after sub_822E7470, first word 4E800020
+0x822EBB80 = {}   # 4 bytes after sub_822EBB70, first word 4E800020
+0x822ECD60 = {}   # 4 bytes after sub_822ECD50, first word 4E800020
+0x822EE740 = {}   # 4 bytes after sub_822EE730, first word 4E800020
+0x822EF528 = {}   # 4 bytes after sub_822EF518, first word 4E800020
+0x8230D918 = {}   # 68 bytes after sub_8230D568, first word 81640000
+0x8232ECC0 = {}   # 56 bytes after sub_8232E930, first word 81640000
+0x82381468 = {}   # 4 bytes after sub_823813F8, first word 4E800020
+0x823817D0 = {}   # 4 bytes after sub_82381758, first word 4E800020
+0x82437CE0 = {}   # 32 bytes after sub_824379D0, first word 3D608274
+0x8244863C = {}   # 4 bytes after sub_82448608, first word 4E800020
+0x824747CC = {}   # 4 bytes after sub_824747B0, first word 4E800020
+0x82479088 = {}   # addi r3,r3,-4; b - adjustor thunk after sub_82479080
+0x82481DC0 = {}   # 16 bytes after sub_82481DB0, first word C0030070
+0x8249B738 = {}   # 8 bytes after sub_8249B658, first word FC201890
+0x824DE080 = {}   # 20 bytes after sub_824DE070, first word 39600000
+0x824F2D0C = {}   # 4 bytes after sub_824F2CC0, first word 4E800020
+0x824F2D38 = {}   # 4 bytes after sub_824F2D10, first word 4E800020
+0x824F58E0 = {}   # 20 bytes after sub_824F58C8, first word 81630000
+0x824FF188 = {}   # 12 bytes after sub_824FF178, first word 39600000
+0x82539634 = {}   # 4 bytes after sub_825395F8, first word 4E800020
+0x82539EE8 = {}   # 4 bytes after sub_82539EB0, first word 4E800020
+0x8253CE38 = {}   # 16 bytes after sub_8253CE28, first word 7C6B1B78
+0x825429E0 = {}   # 24 bytes after sub_825429C8, first word 81630000
+0x82544C98 = {}   # 8 bytes after sub_82544C80, first word 3863016C
+0x82544CB8 = {}   # 8 bytes after sub_82544CA0, first word 3863011C
+0x82544E40 = {}   # 32 bytes after sub_82544E20, first word 81630040
+0x82544E60 = {}   # 32 bytes after sub_82544E20, first word 81630040
+0x82544E80 = {}   # 32 bytes after sub_82544E20, first word 81630040
+0x82544EA0 = {}   # 32 bytes after sub_82544E20, first word 81630040
+0x82544EC0 = {}   # 32 bytes after sub_82544E20, first word 81630040
+0x82544EE0 = {}   # 32 bytes after sub_82544E20, first word 81630040
+0x82544F00 = {}   # 32 bytes after sub_82544E20, first word 81630040
+0x82544F20 = {}   # 32 bytes after sub_82544E20, first word 81630040
+0x82544F40 = {}   # 32 bytes after sub_82544E20, first word 81630040
+0x82544F60 = {}   # 32 bytes after sub_82544E20, first word 81630040
+0x825467D8 = {}   # 16 bytes after sub_825467C8, first word 81630000
+0x82546A98 = {}   # 4 bytes after sub_82546A70, first word 4E800020
+0x82546AC8 = {}   # 4 bytes after sub_82546AA0, first word 4E800020
+0x8254C030 = {}   # 8 bytes after sub_8254C018, first word 3863002C
+0x82661310 = {}   # addi r3,r3,-16; b - adjustor thunk after sub_82661308
+0x82661318 = {}   # addi r3,r3,-16; b - adjustor thunk after sub_82661308
+0x82674728 = {}   # addi r3,r3,-12; b - adjustor thunk after sub_82674720
+0x8267B490 = {}   # addi r3,r3,-12; b - adjustor thunk after sub_8267B488
+0x8267B498 = {}   # addi r3,r3,-16; b - adjustor thunk after sub_8267B488
+0x8267B4A0 = {}   # addi r3,r3,-12; b - adjustor thunk after sub_8267B488
+0x8267EA60 = {}   # addi r3,r3,-16; b - adjustor thunk after sub_8267EA58
+0x8267EA68 = {}   # addi r3,r3,-12; b - adjustor thunk after sub_8267EA58
+0x826872A0 = {}   # addi r3,r3,-4; b - adjustor thunk after sub_82687298
+0x826B8B48 = {}   # 448 bytes after sub_826B8978, first word 7D8802A6
