@@ -15,6 +15,9 @@
 
 #include <algorithm>
 #include <chrono>
+#include <string>
+
+#include <fmt/format.h>
 
 #include <rex/cvar.h>
 #include <rex/hook.h>
@@ -165,6 +168,7 @@ REX_HOOK_RAW(VP_FN_supportPinataCreateGeneralEx)
 REX_HOOK_RAW(VP_FN_appMainTickPreDraw)
 {
   const vp_tools::Entry entry = vp_tools::OnEntry(ctx);
+  std::string tick_log;
   {
     const auto now = std::chrono::steady_clock::now();
     std::lock_guard lock(vp_tools::Mutex());
@@ -174,13 +178,40 @@ REX_HOOK_RAW(VP_FN_appMainTickPreDraw)
       const float ms = std::chrono::duration<float, std::milli>(now - t.last).count();
       t.interval_ms[t.count % t.interval_ms.size()] = ms;
       ++t.count;
+      ++t.log_count;
       if (ms > vp_tools::TickTimes::kSlowMs)
       {
         ++t.slow;
+        ++t.log_slow;
       }
       t.worst_ms = std::max(t.worst_ms, ms);
+      t.log_worst_ms = std::max(t.log_worst_ms, ms);
     }
     t.last = now;
+
+    const int32_t log_seconds = REXCVAR_GET(vp_tools_log_ticks);
+    if (log_seconds > 0)
+    {
+      if (t.log_since == std::chrono::steady_clock::time_point{})
+      {
+        t.log_since = now;
+        t.log_count = t.log_slow = 0;
+        t.log_worst_ms = 0.0f;
+      }
+      const double window = std::chrono::duration<double>(now - t.log_since).count();
+      if (window >= log_seconds)
+      {
+        tick_log = fmt::format("[vp_tools] ticks: {:.1f}/s over {:.1f} s, slow (>50 ms) {}/{}, worst {:.0f} ms",
+                               t.log_count / window, window, t.log_slow, t.log_count, t.log_worst_ms);
+        t.log_since = now;
+        t.log_count = t.log_slow = 0;
+        t.log_worst_ms = 0.0f;
+      }
+    }
+  }
+  if (!tick_log.empty())
+  {
+    REXLOG_INFO("{}", tick_log);
   }
   VP_IMP_appMainTickPreDraw(ctx, base);
   vp_tools::RecordCall(vp_tools::kTraceTick, entry, ctx.r3.u32);

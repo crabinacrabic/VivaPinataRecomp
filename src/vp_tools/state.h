@@ -160,6 +160,11 @@ namespace vp_tools
     uint64_t slow = 0;
     float worst_ms = 0.0f;
     std::chrono::steady_clock::time_point last{};
+    // vp_tools_log_ticks window: ticks, slow ticks and worst interval since log_since.
+    std::chrono::steady_clock::time_point log_since{};
+    uint64_t log_count = 0;
+    uint64_t log_slow = 0;
+    float log_worst_ms = 0.0f;
   };
 
   inline TickTimes &Ticks()

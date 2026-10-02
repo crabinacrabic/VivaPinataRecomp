@@ -53,6 +53,7 @@
 
 #include "game_cvars.h"
 #include "launcher.h"
+#include "vp_tools/gpu_state.h"
 #include "vp_tools/memory_scan.h"
 #include "vp_tools/state.h"
 #include "vp_tools/write_watch.h"
@@ -68,6 +69,7 @@ namespace vp_tools
     const char *tab_spawn;
     const char *tab_memory;
     const char *tab_trace;
+    const char *tab_gpu;
     const char *hint;
 
     const char *ticks_per_second;
@@ -143,6 +145,15 @@ namespace vp_tools
     const char *spawns;
     const char *spawns_none;
     const char *trace_help;
+
+    const char *gpu_help;
+    const char *gpu_sample;
+    const char *gpu_sampling;
+    const char *gpu_unavailable;
+    const char *gpu_empty;
+    const char *gpu_share;
+    const char *gpu_entries;
+    const char *gpu_state;
   };
 
   inline constexpr ToolsText kToolsEn = {
@@ -151,6 +162,7 @@ namespace vp_tools
       .tab_spawn = "Spawn###spawn",
       .tab_memory = "Memory###memory",
       .tab_trace = "Trace###trace",
+      .tab_gpu = "GPU###gpu",
       .hint = "F1 / Esc / B: close",
 
       .ticks_per_second = "Game ticks per second",
@@ -230,6 +242,17 @@ namespace vp_tools
       .spawns_none = "No spawns yet.",
       .trace_help = "? marks a candidate that is not confirmed yet. A function that keeps 0 calls in the garden is "
                     "probably a wrong match.",
+
+      .gpu_help = "Reads the guest render-backend registers for 3 s: MSAA, render target formats, depth test, "
+                  "blending. Share = time the GPU command processor sat in the state, entries = how many times it "
+                  "switched into it. Research for Knowlage_BASE/ROV_AMD_RESEARCH.md.",
+      .gpu_sample = "Sample 3 s",
+      .gpu_sampling = "Sampling...",
+      .gpu_unavailable = "The GPU plugin is not running.",
+      .gpu_empty = "No samples yet.",
+      .gpu_share = "Share",
+      .gpu_entries = "Entries",
+      .gpu_state = "State",
   };
 
   inline constexpr ToolsText kToolsRu = {
@@ -238,6 +261,7 @@ namespace vp_tools
       .tab_spawn = "Пиньяты###spawn",
       .tab_memory = "Память###memory",
       .tab_trace = "Трассировка###trace",
+      .tab_gpu = "GPU###gpu",
       .hint = "F1 / Esc / B: закрыть",
 
       .ticks_per_second = "Игровых тиков в секунду",
@@ -317,6 +341,17 @@ namespace vp_tools
       .spawns_none = "Объекты ещё не создавались.",
       .trace_help = "? — кандидат, ещё не подтверждён. Если в саду у функции так и остаётся 0 вызовов, это, скорее "
                     "всего, неверное совпадение.",
+
+      .gpu_help = "За 3 с читает регистры видеочипа Xbox: MSAA, форматы целей рисования, тест глубины, смешивание. "
+                  "Доля — сколько времени командный процессор GPU провёл в состоянии, входы — сколько раз он в него "
+                  "переключался. Для исследования Knowlage_BASE/ROV_AMD_RESEARCH.md.",
+      .gpu_sample = "Замер 3 с",
+      .gpu_sampling = "Идёт замер...",
+      .gpu_unavailable = "GPU-плагин не запущен.",
+      .gpu_empty = "Замеров ещё не было.",
+      .gpu_share = "Доля",
+      .gpu_entries = "Входы",
+      .gpu_state = "Состояние",
   };
 
   inline const ToolsText &T() { return vp_launcher::UiRussian() ? kToolsRu : kToolsEn; }
@@ -506,6 +541,11 @@ namespace vp_tools
           if (ImGui::BeginTabItem(t.tab_trace))
           {
             DrawTrace(t);
+            ImGui::EndTabItem();
+          }
+          if (ImGui::BeginTabItem(t.tab_gpu))
+          {
+            DrawGpu(t);
             ImGui::EndTabItem();
           }
           ImGui::EndTabBar();
@@ -1188,6 +1228,80 @@ namespace vp_tools
       }
     }
 
+    // --- GPU ----------------------------------------------------------------------
+
+    void DrawGpu(const ToolsText &t)
+    {
+      GpuStateSampler &sampler = GpuStateSampler::Get();
+      ImGui::TextWrapped("%s", t.gpu_help);
+      if (!sampler.available())
+      {
+        ImGui::TextDisabled("%s", t.gpu_unavailable);
+        return;
+      }
+      const bool running = sampler.running();
+      if (gpu_was_running_ && !running)
+      {
+        // A sample just finished: keep it in the log for later reading.
+        REXLOG_INFO("[vp_tools] {}", GpuStateSampler::Report(sampler.Snapshot()));
+      }
+      gpu_was_running_ = running;
+      if (running)
+      {
+        ImGui::TextUnformatted(t.gpu_sampling);
+      }
+      else if (ImGui::Button(t.gpu_sample))
+      {
+        sampler.Start(3.0);
+        gpu_was_running_ = true;
+      }
+      if (!running)
+      {
+        ImGui::SameLine();
+        if (ImGui::Button(t.copy_report))
+        {
+          const std::string report = GpuStateSampler::Report(sampler.Snapshot());
+          ImGui::SetClipboardText(report.c_str());
+          REXLOG_INFO("[vp_tools] {}", report);
+          copied_until_ = Clock::now() + std::chrono::seconds(3);
+        }
+        if (Clock::now() < copied_until_)
+        {
+          ImGui::SameLine();
+          ImGui::TextDisabled("%s", t.copied);
+        }
+      }
+
+      const GpuStateSampler::Result r = sampler.Snapshot();
+      if (!r.samples)
+      {
+        ImGui::TextDisabled("%s", t.gpu_empty);
+        return;
+      }
+      ImGui::Text("%llu samples, %.1f s, %zu states", static_cast<unsigned long long>(r.samples), r.seconds,
+                  r.states.size());
+      if (ImGui::BeginTable("gpu_states", 3,
+                            ImGuiTableFlags_Borders | ImGuiTableFlags_ScrollY | ImGuiTableFlags_SizingFixedFit,
+                            ImVec2(0, 360)))
+      {
+        ImGui::TableSetupColumn(t.gpu_share);
+        ImGui::TableSetupColumn(t.gpu_entries);
+        ImGui::TableSetupColumn(t.gpu_state);
+        ImGui::TableHeadersRow();
+        for (const auto &[s, c] : r.states)
+        {
+          ImGui::TableNextRow();
+          ImGui::TableNextColumn();
+          ImGui::Text("%5.1f%%", 100.0 * static_cast<double>(c.samples) / static_cast<double>(r.samples));
+          ImGui::TableNextColumn();
+          ImGui::Text("%llu", static_cast<unsigned long long>(c.entries));
+          ImGui::TableNextColumn();
+          ImGui::TextUnformatted(GpuStateSampler::Describe(s).c_str());
+        }
+        ImGui::EndTable();
+      }
+    }
+
     // Plain-text dump of the Trace tab, for the clipboard and the log.
     std::string Report(const std::array<FnTrace, kTraceCount> &traces, const SpawnLog &spawns)
     {
@@ -1258,6 +1372,7 @@ namespace vp_tools
     bool back_used_ = false;
     Clock::time_point back_since_{};
     Clock::time_point copied_until_{};
+    bool gpu_was_running_ = false;
 
     TickRate tick_rate_;
     int player_edit_[3] = {};

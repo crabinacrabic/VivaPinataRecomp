@@ -46,3 +46,6 @@ REXCVAR_DEFINE_BOOL(vp_tools, true, "Tools", "Enable the VP Tools menu (F1 / hol
 
 REXCVAR_DEFINE_BOOL(vp_tools_trace, false, "Tools",
                     "Log the first calls of the engine functions VP Tools hooks (verification)");
+
+REXCVAR_DEFINE_INT32(vp_tools_log_ticks, 0, "Tools",
+                     "Log the game tick rate every N seconds (0 = off); for unattended benchmarks");
