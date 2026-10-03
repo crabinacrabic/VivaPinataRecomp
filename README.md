@@ -116,14 +116,28 @@ Most settings are in the launcher. Everything else is in [`settings/hardware.tom
 
 ## What works
 
+Tested on Windows 11 with an AMD Radeon RX 6600.
+
 | | |
 | :-- | :-- |
-| ✅ | Menus, title screen, the garden and the whole game |
+| ✅ | Menus, title screen, garden gameplay, saving and loading |
 | ✅ | Sound, Xbox controller, keyboard and mouse |
+| ✅ | The original 30 FPS in the default **Fast** graphics mode |
 | ✅ | Launcher in English and Russian, with a game version check and graphics settings |
 | ✅ | Russian text (ZoG Team translation) |
-| 🚧 | Skipping intro videos and unlocking 30 FPS are not done yet |
+| ⚠️ | **Accurate** graphics mode (exact Xbox 360 render target emulation) is slow on AMD: about 10–15 FPS instead of 30 on an RX 6600 |
+| ⚠️ | A rare crash after about a minute of idling on the title screen. Pressing START before that avoids it |
 | 🚧 | Direct3D 12 only |
+| 🚧 | No frame rates above 30 FPS; intro videos can't be skipped |
+
+The whole game has not been played through from start to finish yet. If something breaks, please open an issue and attach the log from `out\build\local-win-relwithdebinfo\logs\`.
+
+## What we're working on
+
+- **A fast Accurate mode on AMD.** We found out why it is slow: AMD drivers make the GPU wait for each pixel's turn, and that waiting takes most of the time. In research builds of the ReXGlue SDK, Accurate mode is already about twice as fast (Direct3D 12: 11 → 21 FPS, Vulkan: 8 → 16 FPS). The goal is Vulkan, exact rendering and a steady 30 FPS. These changes are not in the game builds yet.
+- **Vulkan.** It runs in research builds. A ReXGlue bug that hid the ground under Vulkan is reported upstream ([rexglue/rexglue-sdk#474](https://github.com/rexglue/rexglue-sdk/issues/474)).
+- **VP Tools**, an in-game developer menu (`F1` or hold Back): spawning piñatas, a value scanner, engine traces and GPU statistics. Next: editing coins and experience. Later: a base for mods.
+- **The title screen crash** (a crash log is already written to `logs\vp_crash.txt`).
 
 ## If something goes wrong
 
