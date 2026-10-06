@@ -213,6 +213,25 @@ REX_HOOK_RAW(VP_FN_appMainTickPreDraw)
   {
     REXLOG_INFO("{}", tick_log);
   }
+  // --vp_tools_freeze_after=N (seconds after the first tick) or
+  // --vp_tools_freeze_at_tick=N: the world stops, the same frame keeps being
+  // drawn (exactness checks and benchmarks of GPU research paths).
+  static const auto first_tick = std::chrono::steady_clock::now();
+  static int32_t ticks_run = 0;
+  const int32_t freeze_after = REXCVAR_GET(vp_tools_freeze_after);
+  const int32_t freeze_at_tick = REXCVAR_GET(vp_tools_freeze_at_tick);
+  if ((freeze_after > 0 && std::chrono::steady_clock::now() - first_tick >= std::chrono::seconds(freeze_after)) ||
+      (freeze_at_tick > 0 && ticks_run >= freeze_at_tick))
+  {
+    static bool frozen_logged = false;
+    if (!frozen_logged)
+    {
+      frozen_logged = true;
+      REXLOG_INFO("[vp_tools] world frozen after {} ticks", ticks_run);
+    }
+    return;
+  }
+  ++ticks_run;
   VP_IMP_appMainTickPreDraw(ctx, base);
   vp_tools::RecordCall(vp_tools::kTraceTick, entry, ctx.r3.u32);
   vp_tools::ServiceSpawnRequests(ctx, base);

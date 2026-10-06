@@ -49,3 +49,11 @@ REXCVAR_DEFINE_BOOL(vp_tools_trace, false, "Tools",
 
 REXCVAR_DEFINE_INT32(vp_tools_log_ticks, 0, "Tools",
                      "Log the game tick rate every N seconds (0 = off); for unattended benchmarks");
+
+REXCVAR_DEFINE_INT32(vp_tools_freeze_after, 0, "Tools",
+                     "Stop the game tick (appMainTickPreDraw) N seconds after the first tick, while "
+                     "the frames keep being drawn (0 = off); for frame comparisons");
+
+REXCVAR_DEFINE_INT32(vp_tools_freeze_at_tick, 0, "Tools",
+                     "Stop the game tick after N ticks, while the frames keep being drawn (0 = off); "
+                     "the same frame in every run, for benchmarks");
