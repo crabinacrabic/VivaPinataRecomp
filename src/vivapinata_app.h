@@ -69,6 +69,7 @@ public:
     REXCVAR_SET(input_backend, "xinput");
 
     std::string backend = REXCVAR_GET(graphics_backend);
+    vp_launcher::ActiveBackend() = backend;
     if (backend != "any" && !config.gpu_plugin.empty())
     {
       config.graphics = rex::system::LoadGpuPlugin(config.gpu_plugin, backend);

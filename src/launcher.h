@@ -4,7 +4,9 @@
 // open, so ConstructRuntime (GPU init, XEX load) only runs after PLAY.
 // Settings picked here therefore apply on this launch: render_target_path_d3d12
 // (kInitOnly) and resolution_scale (kRequiresRestart) are read when the GPU
-// system is set up, which has not happened yet.
+// system is set up, which has not happened yet. The GPU API (graphics_backend)
+// is the exception: the launcher itself is drawn with it, so a render mode on
+// another API restarts the game once (RestartWithoutLauncher).
 //
 // Choices go to settings/launcher.toml (flat key = value), which
 // utils::LoadSettingsFiles loads after hardware.toml so they win over it.
@@ -412,21 +414,71 @@ namespace vp_launcher
   inline const ImVec4 kQuitColor(0.30f, 0.32f, 0.36f, 1.0f);
   inline const ImVec4 kSwitchColor(0.10f, 0.12f, 0.11f, 0.75f);
 
-  // Render modes: each sets the render-target path and the resolve readback
-  // together. Measured on an RX 6600 in the garden (2026-10-01): ROV + full
-  // readback 13-15 game ticks/s (GPU 99%), RTV + fast readback 29.6 (the game's
-  // 30, GPU 62%). ROV emulates the Xbox 360 EDRAM in a pixel shader and is
-  // exact but heavy, slowest on AMD; RTV uses the PC GPU's own render targets.
+  // Render modes: each sets the GPU API, the render-target path and the
+  // resolve readback together.
+  // - Fast: D3D12 with the PC GPU's own render targets (RTV) and the previous
+  //   frame's resolve data; 30 ticks/s on an RX 6600 (GPU ~60%).
+  // - Accurate: the Xbox 360 EDRAM emulated exactly in the pixel shader with
+  //   Vulkan fragment shader interlock, the exact speedups of our SDK build
+  //   (edram_interlock_optimizations) and lazy readback (the same resolve data
+  //   as a full sync, copied when the CPU reads it). Checked pixel for pixel
+  //   against the unoptimized path; 30 ticks/s on an RX 6600 in the garden
+  //   (2026-10-09; before: D3D12 ROV + full readback, 13-15 ticks/s).
   struct RenderMode
   {
-    const char *path;            // render_target_path_d3d12
+    const char *backend;         // graphics_backend
+    const char *path_d3d12;      // render_target_path_d3d12
+    const char *path_vulkan;     // render_target_path_vulkan
     const char *readback;        // readback_resolve
     const char *d3d12_readback;  // d3d12_readback_resolve (legacy alias, kept in step)
+    const char *optimizations;   // edram_interlock_optimizations
   };
   inline constexpr RenderMode kRenderModes[] = {
-      {"rtv", "fast", "false"},  // fast
-      {"rov", "full", "true"},   // accurate
+      {"d3d12", "rtv", "", "fast", "false", "false"},    // fast
+      {"vulkan", "rov", "fsi", "lazy", "true", "true"},  // accurate
   };
+
+  // graphics_backend as it was when the GPU plugin was loaded (set by
+  // VivapinataApp::OnPreSetup); "any" lets the plugin pick, which is D3D12
+  // first on Windows.
+  inline std::string &ActiveBackend()
+  {
+    static std::string backend;
+    return backend;
+  }
+  inline std::string NormalizedBackend(std::string backend)
+  {
+    return (backend.empty() || backend == "any") ? std::string("d3d12") : backend;
+  }
+
+  // Starts the game again with the same command line, without the launcher
+  // (for a render mode on another GPU API). The caller closes this instance.
+  inline bool RestartWithoutLauncher()
+  {
+#if defined(_WIN32)
+    wchar_t exe[MAX_PATH];
+    if (!GetModuleFileNameW(nullptr, exe, MAX_PATH))
+    {
+      return false;
+    }
+    std::wstring command_line = GetCommandLineW();
+    command_line += L" --vp_show_launcher=false";
+    STARTUPINFOW startup_info = {};
+    startup_info.cb = sizeof(startup_info);
+    PROCESS_INFORMATION process_info = {};
+    if (!CreateProcessW(exe, command_line.data(), nullptr, nullptr, FALSE, 0, nullptr, nullptr,
+                        &startup_info, &process_info))
+    {
+      REXLOG_ERROR("launcher: restart failed ({})", GetLastError());
+      return false;
+    }
+    CloseHandle(process_info.hThread);
+    CloseHandle(process_info.hProcess);
+    return true;
+#else
+    return false;
+#endif
+  }
 
   // ---------------------------------------------------------------------------
   // UI text (English / Russian)
@@ -499,8 +551,10 @@ namespace vp_launcher
       .resolution = "Render resolution",
       .scale = {"×1 — 1280×720, like the Xbox 360", "×2 — 2560×1440", "×3 — 3840×2160"},
       .render_mode = "Render mode",
-      .path = {"Fast (RTV) — full speed, slightly less accurate", "Accurate (ROV) — exact Xbox 360 picture, slow"},
-      .path_note = "Fast is recommended. Accurate can halve the frame rate, most of all on AMD cards.",
+      .path = {"Fast (D3D12, RTV) — full speed, slightly less accurate",
+               "Accurate (Vulkan, exact EDRAM) — the exact Xbox 360 picture"},
+      .path_note = "Accurate emulates the Xbox 360 video memory exactly and needs a stronger GPU (an RX 6600 "
+                   "holds the game's 30 FPS). Changing between the modes restarts the game once.",
       .precise_timer = "Precise system timer (1 ms)",
       .launcher_language = "Launcher language",
       .language_auto = "Auto (Windows language)",
@@ -535,8 +589,10 @@ namespace vp_launcher
       .resolution = "Разрешение рендера",
       .scale = {"×1 — 1280×720, как на Xbox 360", "×2 — 2560×1440", "×3 — 3840×2160"},
       .render_mode = "Режим рендера",
-      .path = {"Быстрый (RTV) — полная скорость, чуть менее точный", "Точный (ROV) — картинка как на Xbox 360, медленный"},
-      .path_note = "Рекомендуется быстрый. Точный может вдвое снизить частоту кадров, сильнее всего на картах AMD.",
+      .path = {"Быстрый (D3D12, RTV) — полная скорость, чуть менее точный",
+               "Точный (Vulkan, точная EDRAM) — картинка как на Xbox 360"},
+      .path_note = "Точный режим в точности эмулирует видеопамять Xbox 360 и требует видеокарту мощнее "
+                   "(RX 6600 держит игровые 30 кадров/с). При смене режима игра один раз перезапустится.",
       .precise_timer = "Точный системный таймер (1 мс)",
       .launcher_language = "Язык лаунчера",
       .language_auto = "Авто (язык Windows)",
@@ -618,6 +674,11 @@ namespace vp_launcher
           on_play_(std::move(on_play)),
           on_quit_(std::move(on_quit))
     {
+      // Accurate used to be D3D12 ROV + full readback; it is Vulkan FSI now.
+      if (RenderModeIndex() == 1 && REXCVAR_GET(graphics_backend) != "vulkan")
+      {
+        ApplyRenderMode(1);
+      }
     }
 
   protected:
@@ -742,7 +803,15 @@ namespace vp_launcher
       {
         done_ = true;
         options_open_ = false;
-        if (on_play_)
+        if (NormalizedBackend(REXCVAR_GET(graphics_backend)) != NormalizedBackend(ActiveBackend()) &&
+            RestartWithoutLauncher())
+        {
+          if (on_quit_)
+          {
+            on_quit_();
+          }
+        }
+        else if (on_play_)
         {
           on_play_();
         }
@@ -840,10 +909,27 @@ namespace vp_launcher
       }
     }
 
-    // ROV only when asked for explicitly; RTV and "" (SDK choice) show as Fast.
-    static int RenderModeIndex(const std::string &path)
+    // Accurate when Vulkan FSI is set, or ROV from launchers before Vulkan
+    // (migrated in the constructor); anything else shows as Fast.
+    static int RenderModeIndex()
     {
-      return path == "rov" ? 1 : 0;
+      if (REXCVAR_GET(graphics_backend) == "vulkan")
+      {
+        return rex::cvar::Query<std::string>("render_target_path_vulkan") == "fsi" ? 1 : 0;
+      }
+      return rex::cvar::Query<std::string>("render_target_path_d3d12") == "rov" ? 1 : 0;
+    }
+
+    void ApplyRenderMode(int mode)
+    {
+      const RenderMode &m = kRenderModes[mode];
+      auto quoted = [](const char *value) { return std::string("\"") + value + "\""; };
+      settings_.Set("graphics_backend", quoted(m.backend));
+      settings_.Set("render_target_path_d3d12", quoted(m.path_d3d12));
+      settings_.Set("render_target_path_vulkan", quoted(m.path_vulkan));
+      settings_.Set("readback_resolve", quoted(m.readback));
+      settings_.Set("d3d12_readback_resolve", m.d3d12_readback);
+      settings_.Set("edram_interlock_optimizations", m.optimizations);
     }
 
     void DrawOptions(ImGuiIO &io)
@@ -914,15 +1000,12 @@ namespace vp_launcher
 
         ImGui::SeparatorText(ui.section_graphics);
         ImGui::TextUnformatted(ui.render_mode);
-        int mode = RenderModeIndex(rex::cvar::Query<std::string>("render_target_path_d3d12"));
+        int mode = RenderModeIndex();
         constexpr float kModeWidth = 500.0f;  // the mode names are long
         ImGui::SetNextItemWidth(kModeWidth);
         if (ImGui::Combo("##render_mode", &mode, ui.path, IM_ARRAYSIZE(ui.path)))
         {
-          const RenderMode &m = kRenderModes[mode];
-          settings_.Set("render_target_path_d3d12", std::string("\"") + m.path + "\"");
-          settings_.Set("readback_resolve", std::string("\"") + m.readback + "\"");
-          settings_.Set("d3d12_readback_resolve", m.d3d12_readback);
+          ApplyRenderMode(mode);
         }
         {
           FontScope caption(fonts.caption);
