@@ -26,6 +26,7 @@
 #include "game_cvars.h"
 #include "vp_names.h"
 #include "vp_tools/memory_scan.h"
+#include "vp_tools/remote_input.h"
 #include "vp_tools/state.h"
 
 // Found by hand (not graded by tools/port_names.py):
@@ -220,6 +221,10 @@ REX_HOOK_RAW(VP_FN_appMainTickPreDraw)
   static int32_t ticks_run = 0;
   const int32_t freeze_after = REXCVAR_GET(vp_tools_freeze_after);
   const int32_t freeze_at_tick = REXCVAR_GET(vp_tools_freeze_at_tick);
+  if (vp_tools::g_remote_freeze.load(std::memory_order_relaxed))
+  {
+    return;
+  }
   if ((freeze_after > 0 && std::chrono::steady_clock::now() - first_tick >= std::chrono::seconds(freeze_after)) ||
       (freeze_at_tick > 0 && ticks_run >= freeze_at_tick))
   {
@@ -232,6 +237,7 @@ REX_HOOK_RAW(VP_FN_appMainTickPreDraw)
     return;
   }
   ++ticks_run;
+  vp_tools::g_ticks_run.store(ticks_run, std::memory_order_relaxed);
   VP_IMP_appMainTickPreDraw(ctx, base);
   vp_tools::RecordCall(vp_tools::kTraceTick, entry, ctx.r3.u32);
   vp_tools::ServiceSpawnRequests(ctx, base);

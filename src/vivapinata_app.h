@@ -28,6 +28,7 @@
 #include "launcher.h"
 #include "utils.h"
 #include "vp_tools/crash_log.h"
+#include "vp_tools/remote_input.h"
 #include "vp_tools/tools_dialog.h"
 
 class VivapinataApp : public rex::ReXApp
@@ -172,6 +173,16 @@ public:
     // ReTiP's RetipApp::OnPostSetup.
     if (auto *input = static_cast<rex::input::InputSystem *>(runtime()->input_system()))
     {
+      // --vp_tools_remote=<dir>: synthetic pad for unattended lab runs; it
+      // ignores the focus check below (src/vp_tools/remote_input.h).
+      if (const std::string remote = REXCVAR_GET(vp_tools_remote); !remote.empty())
+      {
+        auto driver = std::make_unique<vp_tools::RemoteInputDriver>(window(), remote);
+        if (XSUCCEEDED(driver->Setup()))
+        {
+          input->AddDriver(std::move(driver));
+        }
+      }
       input->SetActiveCallback([this]() {
         if (vp_tools::g_menu_open)
         {
