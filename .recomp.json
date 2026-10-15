@@ -1,0 +1,30 @@
+{
+  "$schema": "https://recomp.fyi/schema/v1.json",
+  "game": "Viva Piñata",
+  "wikidata": "Q913218",
+  "system": "Xbox 360",
+  "type": "recomp",
+  "original": {
+    "serial": "4D5307F2"
+  },
+  "project": "Viva Piñata PC Recompilation",
+  "status": "playable",
+  "targets": [
+    "Windows"
+  ],
+  "toolchain": "Rexglue",
+  "approach": "Static recompilation using ReXGlue SDK v0.10",
+  "maintainers": [
+    {
+      "name": "crabinacrabic",
+      "link": "https://github.com/crabinacrabic"
+    }
+  ],
+  "links": [
+    {
+      "label": "GitHub",
+      "url": "https://github.com/crabinacrabic/VivaPinataRecomp"
+    }
+  ],
+  "notes": "Static recompilation of Viva Pinata (Xbox 360, 2006, 4D5307F2) with the ReXGlue SDK v0.10."
+}
