@@ -64,17 +64,18 @@ public:
 
   void OnPreSetup(rex::RuntimeConfig &config) override
   {
+    // Before the GPU API is chosen: the old Accurate mode (D3D12 ROV) is Vulkan
+    // FSI now. Then the settings files are loaded again: the SDK loads its
+    // primary config (settings/hardware.toml) after OnConfigurePaths, which
+    // undoes launcher.toml for keys that hardware.toml has too, such as
+    // graphics_backend. This also updates the values kept for the GPU cvars,
+    // which register with the plugin below.
+    vp_launcher::MigrateLegacyRenderMode(utils::SettingsDir() / "launcher.toml");
+    utils::LoadSettingsFiles();
+
     // Native XInput avoids SDL controller-mapping surprises on Windows;
     // settings/mapping.toml can still override input_backend.
     REXCVAR_SET(input_backend, "xinput");
-
-    // Before the GPU API is chosen: the old Accurate mode (D3D12 ROV) is Vulkan
-    // FSI now. Loading the files again also updates the values kept for the
-    // GPU cvars, which register with the plugin below.
-    if (vp_launcher::MigrateLegacyRenderMode(utils::SettingsDir() / "launcher.toml"))
-    {
-      utils::LoadSettingsFiles();
-    }
 
     std::string backend = REXCVAR_GET(graphics_backend);
     vp_launcher::ActiveBackend() = backend;
