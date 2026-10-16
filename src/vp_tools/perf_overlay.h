@@ -384,6 +384,12 @@ namespace vp_tools
         ImGui::SameLine();
         ImGui::TextColored(dim, ru ? "кадр %.1f мс, худший %.0f мс" : "frame %.1f ms, worst %.0f ms",
                            ticks_.average_ms, ticks_.worst_ms);
+        // The last 10 s: a hitch is a tick interval over 50 ms (a dropped tick
+        // at 30 per second is ~67 ms), easy to miss in the half-second numbers.
+        ImGui::TextColored(ticks_.hitches_10s ? warn : dim,
+                           ru ? "За 10 с: худший %.0f мс, рывков (>50 мс) %u"
+                              : "Last 10 s: worst %.0f ms, hitches (>50 ms) %u",
+                           ticks_.worst_10s_ms, ticks_.hitches_10s);
 
         Bar("CPU", s.cpu_percent, ru ? "процесс, все ядра" : "process, all cores", good, warn, dim);
         Bar("GPU", s.gpu_percent, ru ? "3D, процесс" : "3D, process", good, warn, dim);
@@ -481,6 +487,18 @@ namespace vp_tools
           worst = std::max(worst, ms);
           ++n;
         }
+        // The last 10 s of intervals (as far as the ring goes back).
+        float span_ms = 0.0f;
+        ticks_.worst_10s_ms = 0.0f;
+        ticks_.hitches_10s = 0;
+        const uint64_t stored = std::min<uint64_t>(count, TickTimes::kSize);
+        for (uint64_t i = 0; i < stored && span_ms < 10000.0f; ++i)
+        {
+          const float ms = t.interval_ms[(count - 1 - i) % TickTimes::kSize];
+          span_ms += ms;
+          ticks_.worst_10s_ms = std::max(ticks_.worst_10s_ms, ms);
+          ticks_.hitches_10s += ms > TickTimes::kSlowMs;
+        }
       }
       if (ticks_.last_time != Clock::time_point{})
       {
@@ -513,6 +531,8 @@ namespace vp_tools
       double per_second = 0.0;
       float average_ms = 0.0f;
       float worst_ms = 0.0f;
+      float worst_10s_ms = 0.0f;
+      uint32_t hitches_10s = 0;
     };
 
     rex::ui::Window *window_;
