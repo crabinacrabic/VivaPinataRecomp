@@ -440,18 +440,23 @@ namespace vp_launcher
   //   unoptimized shader: the EDRAM is identical, one intermediate pass differs
   //   by +-1 in about 100 pixels. 30 ticks/s on an RX 6600 in the garden
   //   (2026-10-16; before: D3D12 ROV + full readback, 13-15 ticks/s).
+  //   Presented with vsync (FIFO relaxed - AMD has no mailbox), not the
+  //   immediate mode: at 30 FPS on a 165 Hz monitor with the GPU ~80% busy,
+  //   showing each frame as soon as it was done looked uneven (user test
+  //   2026-10-17); D3D12 goes through the compositor anyway.
   struct RenderMode
   {
-    const char *backend;         // graphics_backend
-    const char *path_d3d12;      // render_target_path_d3d12
-    const char *path_vulkan;     // render_target_path_vulkan
-    const char *readback;        // readback_resolve
-    const char *d3d12_readback;  // d3d12_readback_resolve (legacy alias, kept in step)
-    const char *optimizations;   // edram_interlock_optimizations
+    const char *backend;          // graphics_backend
+    const char *path_d3d12;       // render_target_path_d3d12
+    const char *path_vulkan;      // render_target_path_vulkan
+    const char *readback;         // readback_resolve
+    const char *d3d12_readback;   // d3d12_readback_resolve (legacy alias, kept in step)
+    const char *optimizations;    // edram_interlock_optimizations
+    const char *vulkan_immediate; // vulkan_allow_present_mode_immediate
   };
   inline constexpr RenderMode kRenderModes[] = {
-      {"d3d12", "rtv", "", "fast", "false", "false"},    // fast
-      {"vulkan", "rov", "fsi", "lazy", "true", "true"},  // accurate
+      {"d3d12", "rtv", "", "fast", "false", "false", "true"},     // fast
+      {"vulkan", "rov", "fsi", "lazy", "true", "true", "false"},  // accurate
   };
 
   // Writes a render mode to launcher.toml; apply_now also sets the cvars (they
@@ -467,6 +472,7 @@ namespace vp_launcher
         {"readback_resolve", quoted(m.readback)},
         {"d3d12_readback_resolve", m.d3d12_readback},
         {"edram_interlock_optimizations", m.optimizations},
+        {"vulkan_allow_present_mode_immediate", m.vulkan_immediate},
     };
     for (const auto &[key, value] : values)
     {
