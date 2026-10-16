@@ -124,6 +124,7 @@ Tested on Windows 11 with an AMD Radeon RX 6600.
 | ✅ | Sound, Xbox controller, keyboard and mouse |
 | ✅ | The original 30 FPS in the default **Fast** graphics mode |
 | ✅ | Launcher in English and Russian, with a game version check and graphics settings |
+| ✅ | Performance overlay on `F2`: game ticks per second, the worst frame, CPU, GPU, video memory, RAM and the render mode |
 | ✅ | Russian text (ZoG Team translation) |
 | ✅ | **Accurate** graphics mode: the Xbox 360 video memory (EDRAM) emulated exactly, on Vulkan. 30 FPS on an RX 6600 |
 | ⚠️ | A rare crash after about a minute of idling on the title screen. Pressing START before that avoids it |

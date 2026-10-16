@@ -28,6 +28,7 @@
 #include "launcher.h"
 #include "utils.h"
 #include "vp_tools/crash_log.h"
+#include "vp_tools/perf_overlay.h"
 #include "vp_tools/remote_input.h"
 #include "vp_tools/tools_dialog.h"
 
@@ -86,6 +87,7 @@ public:
       {
         REXLOG_WARN("graphics_backend '{}' unavailable, falling back to automatic selection",
                     backend);
+        vp_launcher::BackendFallback() = true;
       }
     }
   }
@@ -162,10 +164,12 @@ public:
   }
 
   // VP Tools menu (src/vp_tools/tools_dialog.h): stays registered and draws
-  // nothing until F1 / a Back hold opens it in the game.
+  // nothing until F1 / a Back hold opens it in the game. The performance
+  // overlay (src/vp_tools/perf_overlay.h) likewise until F2.
   void OnCreateDialogs(rex::ui::ImGuiDrawer *drawer) override
   {
     tools_ = std::make_unique<vp_tools::ToolsDialog>(drawer, window());
+    perf_overlay_ = std::make_unique<vp_tools::PerfOverlay>(drawer, window());
   }
 
   void OnPostSetup() override
@@ -226,6 +230,7 @@ public:
   {
     launcher_.reset();
     tools_.reset();
+    perf_overlay_.reset();
     if (REXCVAR_GET(vp_high_res_timer))
     {
       vp_timing::DisableHighResTimer();
@@ -249,4 +254,5 @@ private:
 
   std::unique_ptr<vp_launcher::LauncherDialog> launcher_;
   std::unique_ptr<vp_tools::ToolsDialog> tools_;
+  std::unique_ptr<vp_tools::PerfOverlay> perf_overlay_;
 };

@@ -508,6 +508,13 @@ namespace vp_launcher
     static std::string backend;
     return backend;
   }
+  // The GPU plugin could not use ActiveBackend() and fell back to automatic
+  // selection (Direct3D 12 on Windows), for example without Vulkan.
+  inline bool &BackendFallback()
+  {
+    static bool fallback = false;
+    return fallback;
+  }
   inline std::string NormalizedBackend(std::string backend)
   {
     return (backend.empty() || backend == "any") ? std::string("d3d12") : backend;

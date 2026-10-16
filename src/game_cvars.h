@@ -44,6 +44,10 @@ REXCVAR_DEFINE_BOOL(dev_debug_runtime, false, "Debug",
 // src/vp_tools: in-game tools menu (F1, or hold Back on the controller).
 REXCVAR_DEFINE_BOOL(vp_tools, true, "Tools", "Enable the VP Tools menu (F1 / hold Back)");
 
+REXCVAR_DEFINE_BOOL(vp_perf_overlay, false, "UI",
+                    "Show the performance overlay at start (top left: game ticks, CPU, GPU, memory, "
+                    "render mode); F2 shows and hides it");
+
 REXCVAR_DEFINE_BOOL(vp_tools_trace, false, "Tools",
                     "Log the first calls of the engine functions VP Tools hooks (verification)");
 

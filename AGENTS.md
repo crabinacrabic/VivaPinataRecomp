@@ -185,5 +185,6 @@ game_files/  rexglue/  generated/  out/     not in git
 - **SDK codegen bug:** `vpkd3d128` FLOAT16_4 / FLOAT16_2 with `vD == vB` loses signs. It is worked around with 30 midasm hooks (`config\vivapinata_midasm.toml`, `src\game_fixes.h` section 1). Without them the ground renders white.
 - **Rare CAFF files are inflated in place.** A recompressed stream must have exactly the compressed size recorded in stream 0 (offset 29), with no zero padding. See `compress_exact()` in `tools\make_russian_bnl.py`.
 - The font cache already has all Cyrillic glyphs. Its ABC table is indexed from U+0001.
+- `F2` shows the performance overlay (`src/vp_tools/perf_overlay.h`: ticks per second with the average and worst interval, CPU and 3D-engine GPU load of the process, VRAM, RAM, render mode); `--vp_perf_overlay=true` shows it at start.
 - VP Tools: `vp_tools = false` hides the menu; `--vp_tools_trace=true` logs the first calls of the hooked engine functions (`[vp_tools]` lines); `--vp_tools_log_ticks=5` logs the game tick rate every 5 s (benchmarks without screenshots).
 - Testing without the launcher: `vivapinata.exe --vp_show_launcher=false --vp_language=en`. The log shows `Unhandled guest access violation` for guest crashes; `--log_level=debug` shows VFS misses.
