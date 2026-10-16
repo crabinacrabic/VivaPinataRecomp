@@ -10,7 +10,7 @@
 
 [![Platform](https://img.shields.io/badge/platform-Windows%20x64-0078D6?logo=windows&logoColor=white)](#что-нужно)
 [![Title ID](https://img.shields.io/badge/Title%20ID-4D5307F2-107C10?logo=xbox&logoColor=white)](#какая-версия-игры-нужна)
-[![ReXGlue SDK](https://img.shields.io/badge/ReXGlue%20SDK-v0.10.0.8-8A2BE2)](https://github.com/rexglue/rexglue-sdk)
+[![ReXGlue SDK](https://img.shields.io/badge/ReXGlue%20SDK-v0.10.0.24%20(fork)-8A2BE2)](https://github.com/crabinacrabic/rexglue-sdk/tree/rov-research)
 [![Renderer](https://img.shields.io/badge/render-Direct3D%2012-blue)](#настройки)
 [![Status](https://img.shields.io/badge/status-playable-2ea44f)](#что-работает)
 [![Languages](https://img.shields.io/badge/text-English%20%7C%20Русский-orange)](#русский-язык)
@@ -125,17 +125,17 @@
 | ✅ | Родные 30 FPS в графическом режиме по умолчанию — **«Быстрый»** |
 | ✅ | Лаунчер на русском и английском, с проверкой версии игры и настройками графики |
 | ✅ | Русский текст (перевод ZoG Team) |
-| ⚠️ | Режим **«Точный»** (точная эмуляция графической памяти Xbox 360) медленный на AMD: на RX 6600 около 10–15 FPS вместо 30 |
+| ✅ | Режим **«Точный»**: графическая память Xbox 360 (EDRAM) эмулируется точно, на Vulkan. 30 FPS на RX 6600 |
 | ⚠️ | Редкий вылет, если оставить игру примерно на минуту на титульном экране. Если нажать START раньше, вылета не будет |
-| 🚧 | Только Direct3D 12 |
+| ✅ | Direct3D 12 («Быстрый») и Vulkan («Точный») |
 | 🚧 | Больше 30 FPS нет; ролики в начале не пропускаются |
 
 Игру ещё никто не прошёл от начала до конца. Если что-то сломалось, откройте issue и приложите лог из `out\build\local-win-relwithdebinfo\logs\`.
 
 ## Над чем мы работаем
 
-- **Быстрый «Точный» режим на AMD.** Мы выяснили, почему он медленный: драйвер AMD заставляет видеокарту ждать очереди каждого пикселя, и на это ожидание уходит большая часть времени. В исследовательских сборках ReXGlue SDK «Точный» режим уже примерно вдвое быстрее (Direct3D 12: 11 → 21 FPS, Vulkan: 8 → 16 FPS). Цель — Vulkan, точная картинка и стабильные 30 FPS. В сборки игры эти изменения пока не попали.
-- **Vulkan.** Работает в исследовательских сборках. Баг ReXGlue, из-за которого в Vulkan пропадала земля, отправлен авторам SDK ([rexglue/rexglue-sdk#474](https://github.com/rexglue/rexglue-sdk/issues/474)).
+- **«Точный» режим на полной скорости — готово.** Драйвер AMD заставлял видеокарту ждать очереди каждого пикселя, и на это ожидание уходила большая часть времени. Наша сборка ReXGlue сокращает это ожидание и избавляет процессор от ожидания видеокарты, не меняя результат: эмулируемая видеопамять совпадает с исходным кодом (в одном промежуточном проходе около 100 пикселей отличаются на ±1). «Точный» режим вырос с 13–15 до стабильных 30 FPS на RX 6600. Как это устроено, с замерами: [заметки исследования](https://github.com/crabinacrabic/rexglue-sdk/blob/rov-research/docs/accurate-edram-vulkan.md) (на английском).
+- **Дальше для «Точного»:** те же ускорения для Direct3D 12; проверка, которая прячет «Точный» на видеокартах без fragment shader interlock в Vulkan; очень ждём отчётов с видеокарт NVIDIA и Intel (откройте issue с моделью видеокарты и FPS).
 - **VP Tools** — внутриигровое меню разработчика (`F1` или зажать Back): создание пиньят, поиск значений в памяти, трассировка движка, статистика GPU. Следующий шаг — редактирование монет и опыта, потом — основа для модов.
 - **Вылет на титульном экране** (журнал вылета уже пишется в `logs\vp_crash.txt`).
 
@@ -158,7 +158,7 @@
 
 ## Благодарности
 
-- [ReXGlue SDK](https://github.com/rexglue/rexglue-sdk): рекомпилятор и среда выполнения
+- [ReXGlue SDK](https://github.com/rexglue/rexglue-sdk): рекомпилятор и среда выполнения ([наш форк](https://github.com/crabinacrabic/rexglue-sdk/tree/rov-research) с изменениями «Точного» режима)
 - [Xenia](https://github.com/xenia-project/xenia) и [Xenia Canary](https://github.com/xenia-canary/xenia-canary): графический бэкенд и эталон для сравнения
 - [TiP-Recomp](https://github.com/SolarCookies/TiP-Recomp) (SolarCookies): образец архитектуры и имена функций движка (Viva Piñata: Trouble in Paradise), используются с разрешения автора
 - ZoG Team ([Zone of Games](https://www.zoneofgames.ru/)): русский перевод ПК-версии

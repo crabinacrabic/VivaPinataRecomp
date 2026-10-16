@@ -23,7 +23,7 @@ Talk to the user in their own language. Many users of this project speak Russian
 
 ### 1.1 Check the machine
 
-- Windows 10/11 x64, a GPU with Direct3D 12 (`dxdiag`), about 25 GB free: Visual Studio ~12 GB, game files ~5 GB, the ISO ~8 GB (it can be deleted after unpacking).
+- Windows 10/11 x64, a GPU with Direct3D 12 (`dxdiag`; the Accurate mode also needs Vulkan with fragment shader interlock), about 25 GB free: Visual Studio ~12 GB, game files ~5 GB, the ISO ~8 GB (it can be deleted after unpacking).
 
 ### 1.2 Install the tools
 
@@ -59,7 +59,7 @@ Test-Path C:\Games\VivaPinataRecomp\game_files\Beta\bundles\englishus.bnl   # ex
 
 ### 1.5 Build
 
-On the first configure, CMake downloads ReXGlue SDK `0.10.0.8-dev.g1406e1b` into `rexglue\win-amd64\` (`cmake/fetch-rexglue-sdk.cmake`, a GitHub release `nightly-20260915-1406e1b7`). Then it runs `rexglue codegen vivapinata_manifest.toml` once, which writes `generated\default\`. The first build compiles about 100 generated C++ files. Expect 10–40 minutes in total.
+On the first configure, CMake downloads ReXGlue SDK `0.10.0.24-dev.g717fbdf` into `rexglue\win-amd64\` (`cmake/fetch-rexglue-sdk.cmake`, the GitHub release `accurate-edram-20261016-717fbdf` of the fork [crabinacrabic/rexglue-sdk](https://github.com/crabinacrabic/rexglue-sdk), branch `rov-research`: upstream ReXGlue plus the Accurate mode changes). If `rexglue\win-amd64\` holds another version, it is moved to `rexglue\win-amd64.old-<version>-<time>\` and the pinned one is downloaded; the old folder can be deleted. Then it runs `rexglue codegen vivapinata_manifest.toml` once, which writes `generated\default\`. The first build compiles about 100 generated C++ files. Expect 10–40 minutes in total.
 
 **A. Visual Studio (tested; ask the user to do this):**
 1. Open Visual Studio 2026 → **File → Open → Folder…** → `C:\Games\VivaPinataRecomp`.
@@ -91,7 +91,7 @@ The launcher UI is in English or Russian. It follows the Windows UI language (`v
 | Launcher (EN / RU) | Meaning |
 | :-- | :-- |
 | **PLAY** / **ИГРАТЬ**, or `Enter` | Start the game |
-| **Settings** / **Настройки** | Game text language, fullscreen, V-Sync, render resolution, render mode (**Fast** = RTV + fast readback, the default / **Accurate** = ROV + full readback: exact, but about half the frame rate on AMD), precise timer, launcher language |
+| **Settings** / **Настройки** | Game text language, fullscreen, V-Sync, render resolution, render mode (**Fast** = Direct3D 12 RTV + fast readback, the default / **Accurate** = Vulkan with the Xbox 360 EDRAM emulated exactly (fragment shader interlock, lazy readback): 30 FPS on an RX 6600; switching between them restarts the game once), precise timer, launcher language |
 | **Quit** / **Выход** | Close |
 | **Show at startup** / **Показывать при запуске** | `vp_show_launcher` |
 | Status line | green = correct game found; yellow = other `default.xex`; red = game files missing |
@@ -131,6 +131,7 @@ Then in the launcher choose **Settings → Game text language → Russian** (RU 
 | Symptom | Cause | Fix |
 | :-- | :-- | :-- |
 | CMake: `ReXGlue SDK not found` or `download failed` | No network, or a partial download | Delete `rexglue\win-amd64\` and configure again |
+| Accurate mode: black window, a crash at start, or the game silently runs on Direct3D 12 | No Vulkan, or no `VK_EXT_fragment_shader_interlock` on this GPU / driver (tested only on an AMD RX 6600) | Choose **Fast** in the launcher; please report the GPU in an issue |
 | Codegen exits with `0xC0000409` | Non-ASCII characters in the project path | Move the project to an ASCII path |
 | `Entrypoint XEX not found` / the launcher is red | `game_files` layout is wrong | `default.xex` and `Beta\` must be directly in `game_files\` |
 | `Microsoft Visual C/C++ Version differs in precompiled file` | Visual Studio was updated | Delete `out\build\local-win-relwithdebinfo\CMakeFiles\vivapinata_recomp.dir\cmake_pch.hxx.pch` and build again |
@@ -153,7 +154,7 @@ The maintainer builds and runs everything in Visual Studio. The maintainer's wor
    - `config\*.toml`: function boundaries, hooks, `[[midasm_hook]]` instruction-level hooks.
 3. After editing the manifest or `config\*.toml`, run `python tools\validate_manifest.py` before building.
 4. Push only when the user asks. Never commit game files or `russian.bnl`.
-5. Default settings: 30 FPS, `resolution_scale = 1`, D3D12 RTV + `readback_resolve = "fast"`, no MSAA, XInput. ROV + full readback is the launcher's "Accurate" mode, not the default: on an RX 6600 it holds the game at 13–15 ticks/s instead of 30 (GPU-bound; check with `Get-Counter "\GPU Engine(*)\Utilization Percentage"`).
+5. Default settings: 30 FPS, `resolution_scale = 1`, D3D12 RTV + `readback_resolve = "fast"`, no MSAA, XInput. The launcher's "Accurate" mode is `graphics_backend = "vulkan"`, `render_target_path_vulkan = "fsi"`, `readback_resolve = "lazy"`, `edram_interlock_optimizations = true` (needs our SDK build): 30 ticks/s in the loaded garden on an RX 6600, GPU ~80 % (check with `Get-Counter "\GPU Engine(*)\Utilization Percentage"`). A `launcher.toml` with the old Accurate mode (D3D12 ROV + full readback, 13–15 ticks/s) is migrated at start (`MigrateLegacyRenderMode`).
 
 ### 2.2 Map
 
