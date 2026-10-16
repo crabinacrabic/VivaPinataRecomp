@@ -68,6 +68,14 @@ public:
     // settings/mapping.toml can still override input_backend.
     REXCVAR_SET(input_backend, "xinput");
 
+    // Before the GPU API is chosen: the old Accurate mode (D3D12 ROV) is Vulkan
+    // FSI now. Loading the files again also updates the values kept for the
+    // GPU cvars, which register with the plugin below.
+    if (vp_launcher::MigrateLegacyRenderMode(utils::SettingsDir() / "launcher.toml"))
+    {
+      utils::LoadSettingsFiles();
+    }
+
     std::string backend = REXCVAR_GET(graphics_backend);
     vp_launcher::ActiveBackend() = backend;
     if (backend != "any" && !config.gpu_plugin.empty())

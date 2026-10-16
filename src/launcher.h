@@ -316,6 +316,13 @@ namespace vp_launcher
       {
         REXLOG_WARN("launcher: {} = {} not applied (set on the command line?)", key, raw);
       }
+      Store(key, toml_value);
+    }
+
+    // Only writes the file, for cvars that are not registered yet (the config
+    // passes load it).
+    void Store(const std::string &key, const std::string &toml_value)
+    {
       auto it = std::find_if(values_.begin(), values_.end(),
                              [&](const auto &kv) { return kv.first == key; });
       if (it != values_.end())
@@ -327,6 +334,14 @@ namespace vp_launcher
         values_.emplace_back(key, toml_value);
       }
       Save();
+    }
+
+    // The TOML literal stored for `key`, or "" if the file has none.
+    std::string Get(const std::string &key) const
+    {
+      auto it = std::find_if(values_.begin(), values_.end(),
+                             [&](const auto &kv) { return kv.first == key; });
+      return it != values_.end() ? it->second : std::string();
     }
 
   private:
@@ -437,6 +452,52 @@ namespace vp_launcher
       {"d3d12", "rtv", "", "fast", "false", "false"},    // fast
       {"vulkan", "rov", "fsi", "lazy", "true", "true"},  // accurate
   };
+
+  // Writes a render mode to launcher.toml; apply_now also sets the cvars (they
+  // must all be registered then, i.e. the GPU plugin is loaded).
+  inline void ApplyRenderMode(LauncherSettings &settings, int mode, bool apply_now)
+  {
+    const RenderMode &m = kRenderModes[mode];
+    auto quoted = [](const char *value) { return std::string("\"") + value + "\""; };
+    const std::pair<const char *, std::string> values[] = {
+        {"graphics_backend", quoted(m.backend)},
+        {"render_target_path_d3d12", quoted(m.path_d3d12)},
+        {"render_target_path_vulkan", quoted(m.path_vulkan)},
+        {"readback_resolve", quoted(m.readback)},
+        {"d3d12_readback_resolve", m.d3d12_readback},
+        {"edram_interlock_optimizations", m.optimizations},
+    };
+    for (const auto &[key, value] : values)
+    {
+      if (apply_now)
+      {
+        settings.Set(key, value);
+      }
+      else
+      {
+        settings.Store(key, value);
+      }
+    }
+  }
+
+  // Accurate used to be D3D12 ROV + full readback; it is Vulkan FSI now. A
+  // launcher.toml from before (render_target_path_d3d12 = "rov", no
+  // edram_interlock_optimizations) gets the new Accurate mode. Called by
+  // VivapinataApp::OnPreSetup before the GPU API is chosen, so it also works
+  // with the launcher hidden. Returns true if the file was changed (the caller
+  // loads it again).
+  inline bool MigrateLegacyRenderMode(const std::filesystem::path &launcher_toml)
+  {
+    LauncherSettings settings(launcher_toml);
+    if (settings.Get("render_target_path_d3d12") != "\"rov\"" ||
+        !settings.Get("edram_interlock_optimizations").empty())
+    {
+      return false;
+    }
+    REXLOG_INFO("launcher: Accurate mode moved from D3D12 ROV to Vulkan FSI");
+    ApplyRenderMode(settings, 1, false);
+    return true;
+  }
 
   // graphics_backend as it was when the GPU plugin was loaded (set by
   // VivapinataApp::OnPreSetup); "any" lets the plugin pick, which is D3D12
@@ -674,11 +735,6 @@ namespace vp_launcher
           on_play_(std::move(on_play)),
           on_quit_(std::move(on_quit))
     {
-      // Accurate used to be D3D12 ROV + full readback; it is Vulkan FSI now.
-      if (RenderModeIndex() == 1 && REXCVAR_GET(graphics_backend) != "vulkan")
-      {
-        ApplyRenderMode(1);
-      }
     }
 
   protected:
@@ -909,8 +965,8 @@ namespace vp_launcher
       }
     }
 
-    // Accurate when Vulkan FSI is set, or ROV from launchers before Vulkan
-    // (migrated in the constructor); anything else shows as Fast.
+    // Accurate when Vulkan FSI is set, or ROV set by hand on D3D12 (a legacy
+    // launcher.toml is migrated in OnPreSetup); anything else shows as Fast.
     static int RenderModeIndex()
     {
       if (REXCVAR_GET(graphics_backend) == "vulkan")
@@ -918,18 +974,6 @@ namespace vp_launcher
         return rex::cvar::Query<std::string>("render_target_path_vulkan") == "fsi" ? 1 : 0;
       }
       return rex::cvar::Query<std::string>("render_target_path_d3d12") == "rov" ? 1 : 0;
-    }
-
-    void ApplyRenderMode(int mode)
-    {
-      const RenderMode &m = kRenderModes[mode];
-      auto quoted = [](const char *value) { return std::string("\"") + value + "\""; };
-      settings_.Set("graphics_backend", quoted(m.backend));
-      settings_.Set("render_target_path_d3d12", quoted(m.path_d3d12));
-      settings_.Set("render_target_path_vulkan", quoted(m.path_vulkan));
-      settings_.Set("readback_resolve", quoted(m.readback));
-      settings_.Set("d3d12_readback_resolve", m.d3d12_readback);
-      settings_.Set("edram_interlock_optimizations", m.optimizations);
     }
 
     void DrawOptions(ImGuiIO &io)
@@ -1005,7 +1049,7 @@ namespace vp_launcher
         ImGui::SetNextItemWidth(kModeWidth);
         if (ImGui::Combo("##render_mode", &mode, ui.path, IM_ARRAYSIZE(ui.path)))
         {
-          ApplyRenderMode(mode);
+          ApplyRenderMode(settings_, mode, true);
         }
         {
           FontScope caption(fonts.caption);
