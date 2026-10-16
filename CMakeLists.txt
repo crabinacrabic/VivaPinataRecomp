@@ -12,11 +12,8 @@ project(vivapinata LANGUAGES CXX)
 set(CMAKE_CXX_STANDARD 23)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
 
-# Pin the SDK this project was scaffolded with. cmake/fetch-rexglue-sdk.cmake
-# downloads it into rexglue/<platform> only when that folder is missing; the
-# checked-out copy under rexglue/win-amd64 is left untouched.
-set(REXSDK_VERSION "0.10.0.8-dev.g1406e1b")
-
+# Pin the SDK. cmake/fetch-rexglue-sdk.cmake downloads it into
+# rexglue/<platform> when that folder is missing or holds another version.
 if(WIN32 AND CMAKE_SYSTEM_PROCESSOR MATCHES "^(AMD64|x86_64)$")
     set(REXSDK_PLATFORM "win-amd64")
 elseif(WIN32 AND CMAKE_SYSTEM_PROCESSOR MATCHES "^ARM64$")
@@ -33,11 +30,35 @@ else()
     message(FATAL_ERROR "Unsupported platform: ${CMAKE_SYSTEM_PROCESSOR}")
 endif()
 
+if(REXSDK_PLATFORM STREQUAL "win-amd64")
+    # Our build of ReXGlue (fork crabinacrabic/rexglue-sdk, branch
+    # rov-research): the exact Vulkan EDRAM speedups of the launcher's Accurate
+    # mode and lazy readback. Only win-amd64 is built.
+    set(REXSDK_VERSION "0.10.0.24-dev.g717fbdf")
+    set(REXSDK_RELEASE_URL
+        "https://github.com/crabinacrabic/rexglue-sdk/releases/download/accurate-edram-20261016-717fbdf")
+else()
+    # The upstream nightly the project was scaffolded with (no Accurate mode).
+    set(REXSDK_VERSION "0.10.0.8-dev.g1406e1b")
+    set(REXSDK_RELEASE_URL
+        "https://github.com/rexglue/rexglue-sdk/releases/download/nightly-20260915-1406e1b7")
+endif()
+# Overridable for tests (for example a file:// URL to a local archive).
+set(REXSDK_RELEASE_URL_OVERRIDE "" CACHE STRING "Download URL of the ReXGlue SDK release (empty: pinned)")
+if(REXSDK_RELEASE_URL_OVERRIDE)
+    set(REXSDK_RELEASE_URL "${REXSDK_RELEASE_URL_OVERRIDE}")
+endif()
+
 execute_process(
     COMMAND ${CMAKE_COMMAND}
-            "-DREXSDK_VERSION='${REXSDK_VERSION}'"
+            "-DREXSDK_VERSION=${REXSDK_VERSION}"
             "-DREXSDK_PLATFORM=${REXSDK_PLATFORM}"
-            -P "${CMAKE_CURRENT_SOURCE_DIR}/cmake/fetch-rexglue-sdk.cmake")
+            "-DREXSDK_RELEASE_URL=${REXSDK_RELEASE_URL}"
+            -P "${CMAKE_CURRENT_SOURCE_DIR}/cmake/fetch-rexglue-sdk.cmake"
+    RESULT_VARIABLE REXSDK_FETCH_RESULT)
+if(NOT REXSDK_FETCH_RESULT EQUAL 0)
+    message(FATAL_ERROR "ReXGlue SDK ${REXSDK_VERSION} could not be fetched (see above)")
+endif()
 
 # generated/rexglue.cmake treats a non-empty REXSDK_VERSION as an EXACT
 # find_package() pin; clear it so the installed 0.10.0.x package is accepted.
