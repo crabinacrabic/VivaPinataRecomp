@@ -436,9 +436,10 @@ namespace vp_launcher
   // - Accurate: the Xbox 360 EDRAM emulated exactly in the pixel shader with
   //   Vulkan fragment shader interlock, the exact speedups of our SDK build
   //   (edram_interlock_optimizations) and lazy readback (the same resolve data
-  //   as a full sync, copied when the CPU reads it). Checked pixel for pixel
-  //   against the unoptimized path; 30 ticks/s on an RX 6600 in the garden
-  //   (2026-10-09; before: D3D12 ROV + full readback, 13-15 ticks/s).
+  //   as a full sync, copied when the CPU reads it). Checked against the
+  //   unoptimized shader: the EDRAM is identical, one intermediate pass differs
+  //   by +-1 in about 100 pixels. 30 ticks/s on an RX 6600 in the garden
+  //   (2026-10-16; before: D3D12 ROV + full readback, 13-15 ticks/s).
   struct RenderMode
   {
     const char *backend;         // graphics_backend
