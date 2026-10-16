@@ -10,7 +10,7 @@
 
 [![Platform](https://img.shields.io/badge/platform-Windows%20x64-0078D6?logo=windows&logoColor=white)](#what-you-need)
 [![Title ID](https://img.shields.io/badge/Title%20ID-4D5307F2-107C10?logo=xbox&logoColor=white)](#which-game-version-you-need)
-[![ReXGlue SDK](https://img.shields.io/badge/ReXGlue%20SDK-v0.10.0.8-8A2BE2)](https://github.com/rexglue/rexglue-sdk)
+[![ReXGlue SDK](https://img.shields.io/badge/ReXGlue%20SDK-v0.10.0.24%20(fork)-8A2BE2)](https://github.com/crabinacrabic/rexglue-sdk/tree/rov-research)
 [![Renderer](https://img.shields.io/badge/render-Direct3D%2012-blue)](#settings)
 [![Status](https://img.shields.io/badge/status-playable-2ea44f)](#what-works)
 [![Languages](https://img.shields.io/badge/text-English%20%7C%20Русский-orange)](#russian-language)
@@ -124,18 +124,19 @@ Tested on Windows 11 with an AMD Radeon RX 6600.
 | ✅ | Sound, Xbox controller, keyboard and mouse |
 | ✅ | The original 30 FPS in the default **Fast** graphics mode |
 | ✅ | Launcher in English and Russian, with a game version check and graphics settings |
+| ✅ | Performance overlay on `F2`: game ticks per second, the worst frame, CPU, GPU, video memory, RAM and the render mode |
 | ✅ | Russian text (ZoG Team translation) |
-| ⚠️ | **Accurate** graphics mode (exact Xbox 360 render target emulation) is slow on AMD: about 10–15 FPS instead of 30 on an RX 6600 |
+| ✅ | **Accurate** graphics mode: the Xbox 360 video memory (EDRAM) emulated exactly, on Vulkan. 30 FPS on an RX 6600 |
 | ⚠️ | A rare crash after about a minute of idling on the title screen. Pressing START before that avoids it |
-| 🚧 | Direct3D 12 only |
+| ✅ | Direct3D 12 (Fast) and Vulkan (Accurate) |
 | 🚧 | No frame rates above 30 FPS; intro videos can't be skipped |
 
 The whole game has not been played through from start to finish yet. If something breaks, please open an issue and attach the log from `out\build\local-win-relwithdebinfo\logs\`.
 
 ## What we're working on
 
-- **A fast Accurate mode on AMD.** We found out why it is slow: AMD drivers make the GPU wait for each pixel's turn, and that waiting takes most of the time. In research builds of the ReXGlue SDK, Accurate mode is already about twice as fast (Direct3D 12: 11 → 21 FPS, Vulkan: 8 → 16 FPS). The goal is Vulkan, exact rendering and a steady 30 FPS. These changes are not in the game builds yet.
-- **Vulkan.** It runs in research builds. A ReXGlue bug that hid the ground under Vulkan is reported upstream ([rexglue/rexglue-sdk#474](https://github.com/rexglue/rexglue-sdk/issues/474)).
+- **Accurate mode at full speed: done.** AMD drivers made the GPU wait for each pixel's turn, and that waiting took most of the time. Our build of ReXGlue shortens that wait and stops the CPU from waiting for the GPU, without changing the result: the emulated video memory is identical to the original code (one intermediate pass differs by ±1 in about 100 pixels). Accurate went from 13–15 to a steady 30 FPS on an RX 6600. How it works, with the measurements: [research notes](https://github.com/crabinacrabic/rexglue-sdk/blob/rov-research/docs/accurate-edram-vulkan.md).
+- **Next for Accurate:** the same speedups for Direct3D 12; a check that hides Accurate on GPUs without Vulkan fragment shader interlock; reports from NVIDIA and Intel GPUs are very welcome (open an issue with your GPU and FPS).
 - **VP Tools**, an in-game developer menu (`F1` or hold Back): spawning piñatas, a value scanner, engine traces and GPU statistics. Next: editing coins and experience. Later: a base for mods.
 - **The title screen crash** (a crash log is already written to `logs\vp_crash.txt`).
 
@@ -158,7 +159,7 @@ How the project is organised, the development rules and the important fixes: [AG
 
 ## Credits
 
-- [ReXGlue SDK](https://github.com/rexglue/rexglue-sdk): recompiler and runtime
+- [ReXGlue SDK](https://github.com/rexglue/rexglue-sdk): recompiler and runtime ([our fork](https://github.com/crabinacrabic/rexglue-sdk/tree/rov-research) with the Accurate mode changes)
 - [Xenia](https://github.com/xenia-project/xenia) and [Xenia Canary](https://github.com/xenia-canary/xenia-canary): graphics backend, and the reference used for comparison
 - [TiP-Recomp](https://github.com/SolarCookies/TiP-Recomp) (SolarCookies): project architecture reference and engine function names (Viva Piñata: Trouble in Paradise), used with the author's permission
 - ZoG Team ([Zone of Games](https://www.zoneofgames.ru/)): the Russian translation of the PC version

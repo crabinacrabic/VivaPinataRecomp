@@ -1,19 +1,23 @@
 # Downloads and extracts the ReXGlue SDK release archive for the current
-# platform into rexglue/<platform>. Idempotent: if rexglue/<platform> already
-# exists, nothing is downloaded or extracted.
+# platform into rexglue/<platform>. If rexglue/<platform> already holds the
+# pinned version (REXGLUE_VERSION_STRING in include/rex/version.h), nothing is
+# done. A folder with another version is moved to
+# rexglue/<platform>.old-<version> (nothing is deleted), then the pinned
+# release is downloaded.
 #
 # Usage:
-#   cmake -DREXSDK_VERSION=<ver> -DREXSDK_PLATFORM=<platform> -P fetch-rexglue-sdk.cmake
+#   cmake -DREXSDK_VERSION=<ver> -DREXSDK_PLATFORM=<platform>
+#         -DREXSDK_RELEASE_URL=<release download URL without the file name>
+#         -P fetch-rexglue-sdk.cmake
 #
 # REXSDK_PLATFORM must be one of: win-amd64, linux-amd64, linux-arm64,
 # mac-amd64, mac-arm64. (No win-arm64 release is published.)
 
-if(NOT DEFINED REXSDK_VERSION)
-    message(FATAL_ERROR "REXSDK_VERSION must be passed via -DREXSDK_VERSION=<version>")
-endif()
-if(NOT DEFINED REXSDK_PLATFORM)
-    message(FATAL_ERROR "REXSDK_PLATFORM must be passed via -DREXSDK_PLATFORM=<platform>")
-endif()
+foreach(var REXSDK_VERSION REXSDK_PLATFORM REXSDK_RELEASE_URL)
+    if(NOT DEFINED ${var})
+        message(FATAL_ERROR "${var} must be passed via -D${var}=<value>")
+    endif()
+endforeach()
 
 set(REXSDK_ROOT "${CMAKE_CURRENT_LIST_DIR}/../rexglue")
 if(NOT EXISTS "${REXSDK_ROOT}")
@@ -23,12 +27,29 @@ endif()
 set(REXSDK_DIR "${REXSDK_ROOT}/${REXSDK_PLATFORM}")
 
 if(EXISTS "${REXSDK_DIR}")
-    message(STATUS "[fetch-rexglue-sdk] ${REXSDK_PLATFORM} already present at ${REXSDK_DIR}; skipping")
-    return()
+    set(found_version "")
+    if(EXISTS "${REXSDK_DIR}/include/rex/version.h")
+        file(STRINGS "${REXSDK_DIR}/include/rex/version.h" version_line
+             REGEX "^#define REXGLUE_VERSION_STRING ")
+        string(REGEX REPLACE "^#define REXGLUE_VERSION_STRING \"([^\"]*)\".*" "\\1"
+               found_version "${version_line}")
+    endif()
+    if(found_version STREQUAL REXSDK_VERSION)
+        message(STATUS "[fetch-rexglue-sdk] ${REXSDK_VERSION} already present at ${REXSDK_DIR}; skipping")
+        return()
+    endif()
+    if(found_version STREQUAL "")
+        set(found_version "unknown")
+    endif()
+    string(TIMESTAMP now "%Y%m%d-%H%M%S")
+    set(old_dir "${REXSDK_DIR}.old-${found_version}-${now}")
+    file(RENAME "${REXSDK_DIR}" "${old_dir}")
+    message(STATUS "[fetch-rexglue-sdk] ${REXSDK_DIR} holds ${found_version}, the project needs "
+                   "${REXSDK_VERSION}: moved it to ${old_dir}")
 endif()
 
 set(REXSDK_ZIP_NAME "rexglue-sdk-${REXSDK_VERSION}-${REXSDK_PLATFORM}.zip")
-set(REXSDK_ZIP_URL "https://github.com/rexglue/rexglue-sdk/releases/download/nightly-20260915-1406e1b7/${REXSDK_ZIP_NAME}")
+set(REXSDK_ZIP_URL "${REXSDK_RELEASE_URL}/${REXSDK_ZIP_NAME}")
 set(REXSDK_ZIP_PATH "${REXSDK_ROOT}/${REXSDK_ZIP_NAME}")
 
 message(STATUS "[fetch-rexglue-sdk] Downloading ${REXSDK_ZIP_URL}")
