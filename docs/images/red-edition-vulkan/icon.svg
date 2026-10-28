@@ -1,0 +1,39 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 440 440" width="440" height="440">
+  <title>RED Edition Vulkan</title>
+  <!-- A red volcano over the glowing mantle. Original artwork for this project, not affiliated with AMD. -->
+  <defs>
+    <clipPath id="badge">
+      <polygon points="44,0 396,0 440,44 440,396 396,440 44,440 0,396 0,44"/>
+    </clipPath>
+  </defs>
+  <g clip-path="url(#badge)">
+    <rect width="440" height="440" fill="#111114"/>
+    <!-- mantle: crust, upper mantle, mantle, hot lower mantle -->
+    <polygon points="0,298 440,292 440,440 0,440" fill="#26262c"/>
+    <polygon points="0,320 440,312 440,440 0,440" fill="#7d0a12"/>
+    <polygon points="0,356 440,346 440,440 0,440" fill="#c8101d"/>
+    <polygon points="0,396 440,384 440,440 0,440" fill="#ff4a1a"/>
+    <!-- magma chamber and conduit -->
+    <polygon points="164,346 220,324 276,346 220,370" fill="#ff7a1a"/>
+    <!-- volcano: two faces, the conduit glowing along the seam -->
+    <polygon points="58,300 176,122 214,136 204,300" fill="#1c1c21"/>
+    <polygon points="204,300 214,136 264,122 382,300" fill="#2d2d34"/>
+    <polygon points="201,330 211,330 217,134 211,134" fill="#ff5a1f"/>
+    <!-- crater -->
+    <polygon points="176,122 196,140 220,128 244,140 264,122 240,132 220,120 200,132" fill="#ff3b1f"/>
+    <!-- lava flow down the right face -->
+    <polygon points="238,138 252,136 264,188 304,232 300,300 284,300 288,240 248,196" fill="#ED1C24"/>
+    <polygon points="196,142 206,140 196,200 168,248 172,300 160,300 156,244 186,196" fill="#b5121c"/>
+    <!-- eruption -->
+    <polygon points="212,120 196,34 230,112" fill="#ED1C24"/>
+    <polygon points="222,118 254,14 238,116" fill="#ff5a1f"/>
+    <polygon points="232,122 300,58 246,128" fill="#ff8c1a"/>
+    <polygon points="206,124 140,66 216,128" fill="#ff5a1f"/>
+    <polygon points="226,116 226,56 236,98" fill="#ffb21a"/>
+    <!-- sparks -->
+    <rect x="160" y="30" width="12" height="12" fill="#ED1C24" transform="rotate(45 166 36)"/>
+    <rect x="290" y="28" width="10" height="10" fill="#ff8c1a" transform="rotate(45 295 33)"/>
+    <rect x="318" y="94" width="8" height="8" fill="#ED1C24" transform="rotate(45 322 98)"/>
+    <rect x="118" y="110" width="8" height="8" fill="#ff8c1a" transform="rotate(45 122 114)"/>
+  </g>
+</svg>
