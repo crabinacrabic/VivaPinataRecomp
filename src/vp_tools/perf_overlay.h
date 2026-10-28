@@ -38,11 +38,15 @@
 #include <imgui.h>
 
 #include <rex/cvar.h>
+#include <rex/graphics/command_processor.h>
+#include <rex/graphics/graphics_system.h>
+#include <rex/runtime.h>
 #include <rex/ui/imgui_dialog.h>
 #include <rex/ui/window.h>
 
 #include "game_cvars.h"
 #include "launcher.h"
+#include "vp_tools/present_stats.h"
 #include "vp_tools/state.h"
 
 namespace vp_tools
@@ -343,6 +347,11 @@ namespace vp_tools
     {
     }
 
+    // Drawn with each game frame: the numbers change twice a second, and
+    // repainting at the display rate would itself disturb the frame pacing it
+    // shows (vsync waits on a busy GPU).
+    bool NeedsContinuousRepaint() const override { return false; }
+
   protected:
     void OnDraw(ImGuiIO &io) override
     {
@@ -364,7 +373,7 @@ namespace vp_tools
       const bool ru = vp_launcher::UiRussian();
       if (UpdateTicks() || mode_text_.empty())
       {
-        mode_text_ = RenderModeText(ru);
+        mode_text_ = RenderModeText(ru, mode_degraded_);
       }
       const ImVec4 good(0.45f, 0.95f, 0.45f, 1.0f), warn(1.0f, 0.85f, 0.3f, 1.0f),
           bad(1.0f, 0.4f, 0.35f, 1.0f), dim(0.7f, 0.74f, 0.72f, 1.0f);
@@ -390,6 +399,8 @@ namespace vp_tools
                            ru ? "За 10 с: худший %.0f мс, рывков (>50 мс) %u"
                               : "Last 10 s: worst %.0f ms, hitches (>50 ms) %u",
                            ticks_.worst_10s_ms, ticks_.hitches_10s);
+        const PresentStats present = CurrentPresentStats();
+        ImGui::TextColored(PresentStatsUneven(present) ? warn : dim, "%s", PresentStatsText(present, ru).c_str());
 
         Bar("CPU", s.cpu_percent, ru ? "процесс, все ядра" : "process, all cores", good, warn, dim);
         Bar("GPU", s.gpu_percent, ru ? "3D, процесс" : "3D, process", good, warn, dim);
@@ -407,7 +418,7 @@ namespace vp_tools
         }
 
         ImGui::Separator();
-        ImGui::TextColored(dim, "%s", mode_text_.c_str());
+        ImGui::TextColored(mode_degraded_ ? warn : dim, "%s", mode_text_.c_str());
         if (!s.gpu_name.empty())
         {
           ImGui::TextColored(dim, "%s", s.gpu_name.c_str());
@@ -436,26 +447,51 @@ namespace vp_tools
       ImGui::TextColored(dim, "%s", note);
     }
 
-    // API, render target path and readback as the GPU plugin was set up.
-    static std::string RenderModeText(bool ru)
+    using RenderTargetPath = rex::graphics::CommandProcessor::RenderTargetPath;
+
+    // The render target path the command processor actually uses (the setting
+    // only says what was asked for: without interlock / ROV support the SDK
+    // falls back to host render targets).
+    static RenderTargetPath ActualRenderTargetPath()
     {
-      const std::string backend = vp_launcher::NormalizedBackend(vp_launcher::ActiveBackend());
+      rex::Runtime *rt = rex::Runtime::instance();
+      auto *gs = rt ? static_cast<rex::graphics::GraphicsSystem *>(rt->graphics_system()) : nullptr;
+      const rex::graphics::CommandProcessor *cp = gs ? gs->command_processor() : nullptr;
+      return cp ? cp->render_target_path() : RenderTargetPath::kUnknown;
+    }
+
+    // API, render target path and readback as the GPU plugin set them up.
+    // degraded: Accurate was asked for but is not what runs.
+    static std::string RenderModeText(bool ru, bool &degraded)
+    {
+      degraded = false;
       if (vp_launcher::BackendFallback())
       {
+        degraded = true;
         return ru ? "D3D12 (Vulkan недоступен)" : "D3D12 (Vulkan unavailable)";
       }
-      std::string text;
-      if (backend == "vulkan")
+      const bool vulkan = vp_launcher::NormalizedBackend(vp_launcher::ActiveBackend()) == "vulkan";
+      const bool exact_asked = vulkan ? rex::cvar::Query<std::string>("render_target_path_vulkan") == "fsi"
+                                      : rex::cvar::Query<std::string>("render_target_path_d3d12") == "rov";
+      std::string text = vulkan ? "Vulkan, " : "D3D12, ";
+      switch (ActualRenderTargetPath())
       {
-        const std::string path = rex::cvar::Query<std::string>("render_target_path_vulkan");
-        text = path == "fsi" ? (ru ? "Vulkan, точная EDRAM (FSI)" : "Vulkan, exact EDRAM (FSI)")
-                             : "Vulkan, " + (path.empty() ? std::string("FBO") : path);
-      }
-      else
-      {
-        const std::string path = rex::cvar::Query<std::string>("render_target_path_d3d12");
-        text = path == "rov" ? (ru ? "D3D12, точная EDRAM (ROV)" : "D3D12, exact EDRAM (ROV)")
-                             : "D3D12, " + (path.empty() ? std::string("RTV") : path);
+      case RenderTargetPath::kPixelShaderInterlock:
+        text += ru ? (vulkan ? "точная EDRAM (FSI)" : "точная EDRAM (ROV)")
+                   : (vulkan ? "exact EDRAM (FSI)" : "exact EDRAM (ROV)");
+        break;
+      case RenderTargetPath::kHostRenderTargets:
+        text += vulkan ? "FBO" : "RTV";
+        if (exact_asked)
+        {
+          degraded = true;
+          text += ru ? (vulkan ? " (FSI не поддерживается)" : " (ROV не поддерживается)")
+                     : (vulkan ? " (no FSI support)" : " (no ROV support)");
+        }
+        break;
+      default:
+        text += ru ? "путь рендера ещё не выбран" : "render path not set up yet";
+        break;
       }
       text += ", readback " + rex::cvar::Query<std::string>("readback_resolve");
       return text;
@@ -540,6 +576,7 @@ namespace vp_tools
     bool f2_down_ = false;
     TickRate ticks_;
     std::string mode_text_;
+    bool mode_degraded_ = false;
 #if defined(_WIN32)
     std::unique_ptr<PerfSampler> sampler_;
 #endif

@@ -495,6 +495,10 @@ namespace vp_tools
       WriteWatch::Get().Disarm();
     }
 
+    // Closed, the dialog only polls F1 / Back, which the paint of each game
+    // frame is often enough for; open, the menu needs input at the display rate.
+    bool NeedsContinuousRepaint() const override { return open_; }
+
   protected:
     void OnDraw(ImGuiIO &io) override
     {
