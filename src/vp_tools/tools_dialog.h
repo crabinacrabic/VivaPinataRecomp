@@ -600,7 +600,12 @@ namespace vp_tools
     {
 #if defined(_WIN32)
       const bool focused = window_ && window_->HasFocus();
-      const bool f1 = focused && (GetAsyncKeyState(VK_F1) & 0x8000) != 0;
+      // 0x0001: pressed since the last check - the dialog is drawn only with
+      // each game frame now, and a short tap may fall between two of them.
+      // Polled without the focus too, so F1 pressed in another window doesn't
+      // toggle the menu once the game gets the focus back.
+      const bool pressed = (GetAsyncKeyState(VK_F1) & 0x8001) != 0;
+      const bool f1 = focused && pressed;
       if (f1 && !f1_down_)
       {
         SetOpen(!open_);

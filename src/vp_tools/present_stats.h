@@ -29,7 +29,7 @@ namespace vp_tools
   // "frames 30.0/s, 33.3 ± 2.9 ms (30-37), presents 165/s"
   inline std::string PresentStatsText(const PresentStats &p, bool ru)
   {
-    if (p.window_seconds <= 0.0)
+    if (p.window_seconds <= 0.0 || p.guest_frames < 2)
     {
       return ru ? "вывод: нет данных" : "present: no data";
     }
@@ -42,7 +42,7 @@ namespace vp_tools
   // Uneven enough to see: the spread of 5/6 refreshes at 165 Hz is ~3 ms.
   inline bool PresentStatsUneven(const PresentStats &p)
   {
-    return p.window_seconds > 0.0 &&
+    return p.window_seconds > 0.0 && p.guest_frames >= 2 &&
            (p.guest_interval_stddev_ms >= 2.5 || p.guest_interval_max_ms >= 1.5 * p.guest_interval_avg_ms);
   }
 }  // namespace vp_tools

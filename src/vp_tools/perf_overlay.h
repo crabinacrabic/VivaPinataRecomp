@@ -551,7 +551,11 @@ namespace vp_tools
     {
 #if defined(_WIN32)
       const bool focused = window_ && window_->HasFocus();
-      const bool f2 = focused && (GetAsyncKeyState(VK_F2) & 0x8000) != 0;
+      // 0x0001: pressed since the last check (drawn once per game frame).
+      // Polled without the focus too, so F2 pressed in another window (rename
+      // in Explorer) doesn't toggle the overlay once the game gets it back.
+      const bool pressed = (GetAsyncKeyState(VK_F2) & 0x8001) != 0;
+      const bool f2 = focused && pressed;
       if (f2 && !f2_down_)
       {
         open_ = !open_;
