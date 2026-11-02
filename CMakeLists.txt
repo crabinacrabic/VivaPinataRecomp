@@ -31,12 +31,12 @@ else()
 endif()
 
 if(REXSDK_PLATFORM STREQUAL "win-amd64")
-    # Our build of ReXGlue (fork crabinacrabic/rexglue-sdk, branch
+    # Our build of ReXGlue (fork crabinacrabic/rexglue-sdk-RED-Edition-LAVA, branch
     # rov-research): the exact Vulkan EDRAM speedups of the launcher's Accurate
     # mode and lazy readback. Only win-amd64 is built.
-    set(REXSDK_VERSION "0.10.0.24-dev.g717fbdf")
+    set(REXSDK_VERSION "0.10.0.30-dev.g8fdf638")
     set(REXSDK_RELEASE_URL
-        "https://github.com/crabinacrabic/rexglue-sdk/releases/download/accurate-edram-20261016-717fbdf")
+        "https://github.com/crabinacrabic/rexglue-sdk-RED-Edition-LAVA/releases/download/red-edition-lava-20261102-8fdf638")
 else()
     # The upstream nightly the project was scaffolded with (no Accurate mode).
     set(REXSDK_VERSION "0.10.0.8-dev.g1406e1b")

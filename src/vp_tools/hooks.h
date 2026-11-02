@@ -26,6 +26,7 @@
 #include "game_cvars.h"
 #include "vp_names.h"
 #include "vp_tools/memory_scan.h"
+#include "vp_tools/present_stats.h"
 #include "vp_tools/remote_input.h"
 #include "vp_tools/state.h"
 
@@ -202,8 +203,9 @@ REX_HOOK_RAW(VP_FN_appMainTickPreDraw)
       const double window = std::chrono::duration<double>(now - t.log_since).count();
       if (window >= log_seconds)
       {
-        tick_log = fmt::format("[vp_tools] ticks: {:.1f}/s over {:.1f} s, slow (>50 ms) {}/{}, worst {:.0f} ms",
-                               t.log_count / window, window, t.log_slow, t.log_count, t.log_worst_ms);
+        tick_log = fmt::format("[vp_tools] ticks: {:.1f}/s over {:.1f} s, slow (>50 ms) {}/{}, worst {:.0f} ms; {}",
+                               t.log_count / window, window, t.log_slow, t.log_count, t.log_worst_ms,
+                               vp_tools::PresentStatsText(vp_tools::CurrentPresentStats(), false));
         t.log_since = now;
         t.log_count = t.log_slow = 0;
         t.log_worst_ms = 0.0f;

@@ -10,8 +10,9 @@
 
 [![Platform](https://img.shields.io/badge/platform-Windows%20x64-0078D6?logo=windows&logoColor=white)](#что-нужно)
 [![Title ID](https://img.shields.io/badge/Title%20ID-4D5307F2-107C10?logo=xbox&logoColor=white)](#какая-версия-игры-нужна)
-[![ReXGlue SDK](https://img.shields.io/badge/ReXGlue%20SDK-v0.10.0.24%20(fork)-8A2BE2)](https://github.com/crabinacrabic/rexglue-sdk/tree/rov-research)
+[![ReXGlue SDK](https://img.shields.io/badge/ReXGlue%20SDK-v0.10.0.30%20(fork)-8A2BE2)](https://github.com/crabinacrabic/rexglue-sdk-RED-Edition-LAVA/tree/rov-research)
 [![Renderer](https://img.shields.io/badge/render-Direct3D%2012-blue)](#настройки)
+[![RED Edition LAVA](https://img.shields.io/badge/RED%20Edition-LAVA-ED1C24)](#red-edition-lava)
 [![Status](https://img.shields.io/badge/status-playable-2ea44f)](#что-работает)
 [![Languages](https://img.shields.io/badge/text-English%20%7C%20Русский-orange)](#русский-язык)
 
@@ -27,6 +28,14 @@
 
 > [!IMPORTANT]
 > **Файлов игры здесь нет.** Нужна своя копия игры, причём строго определённой версии (см. ниже).
+
+## RED Edition LAVA
+
+<p align="center"><img src="docs/images/red-edition-lava/logo.png" width="560" alt="Логотип RED Edition LAVA: раскалённая лава под треснувшей коркой"></p>
+
+**RED Edition LAVA** — так называется наша работа над режимом **«Точный»** в лаунчере: графическая память Xbox 360 (EDRAM) эмулируется точно, на Vulkan с fragment shader interlock, и при этом достаточно быстро, чтобы на AMD Radeon держать игровые 30 FPS (RX 6600). Всё это живёт в [нашем форке ReXGlue SDK](https://github.com/crabinacrabic/rexglue-sdk-RED-Edition-LAVA/tree/rov-research), так что пригодится и другим играм на ReXGlue. Красный — в честь Radeon, на которой всё настраивалось; лава — то, что вулкан выносит из мантии: отсылка к Vulkan, который вырос из AMD Mantle.
+
+<sub>Любительский проект, не связан с AMD и Khronos Group. Vulkan — зарегистрированная торговая марка Khronos Group Inc.; Radeon — торговая марка Advanced Micro Devices, Inc.</sub>
 
 ## Что нужно
 
@@ -124,7 +133,7 @@
 | ✅ | Звук, геймпад Xbox, клавиатура и мышь |
 | ✅ | Родные 30 FPS в графическом режиме по умолчанию — **«Быстрый»** |
 | ✅ | Лаунчер на русском и английском, с проверкой версии игры и настройками графики |
-| ✅ | Окно производительности на `F2`: тики игры в секунду, худший кадр, CPU, GPU, видеопамять, RAM и режим рендера |
+| ✅ | Окно производительности на `F2`: тики игры в секунду, худший кадр, насколько ровно кадры попадают на экран, CPU, GPU, видеопамять, RAM и режим рендера, который работает на самом деле |
 | ✅ | Русский текст (перевод ZoG Team) |
 | ✅ | Режим **«Точный»**: графическая память Xbox 360 (EDRAM) эмулируется точно, на Vulkan. 30 FPS на RX 6600 |
 | ⚠️ | Редкий вылет, если оставить игру примерно на минуту на титульном экране. Если нажать START раньше, вылета не будет |
@@ -135,8 +144,10 @@
 
 ## Над чем мы работаем
 
-- **«Точный» режим на полной скорости — готово.** Драйвер AMD заставлял видеокарту ждать очереди каждого пикселя, и на это ожидание уходила большая часть времени. Наша сборка ReXGlue сокращает это ожидание и избавляет процессор от ожидания видеокарты, не меняя результат: эмулируемая видеопамять совпадает с исходным кодом (в одном промежуточном проходе около 100 пикселей отличаются на ±1). «Точный» режим вырос с 13–15 до стабильных 30 FPS на RX 6600. Как это устроено, с замерами: [заметки исследования](https://github.com/crabinacrabic/rexglue-sdk/blob/rov-research/docs/accurate-edram-vulkan.md) (на английском).
-- **Дальше для «Точного»:** те же ускорения для Direct3D 12; проверка, которая прячет «Точный» на видеокартах без fragment shader interlock в Vulkan; очень ждём отчётов с видеокарт NVIDIA и Intel (откройте issue с моделью видеокарты и FPS).
+- **«Точный» режим на полной скорости — готово.** Драйвер AMD заставлял видеокарту ждать очереди каждого пикселя, и на это ожидание уходила большая часть времени. Наша сборка ReXGlue сокращает это ожидание и избавляет процессор от ожидания видеокарты, не меняя результат: эмулируемая видеопамять совпадает с исходным кодом (в одном промежуточном проходе около 100 пикселей отличаются на ±1). «Точный» режим вырос с 13–15 до стабильных 30 FPS на RX 6600. Как это устроено, с замерами: [заметки исследования](https://github.com/crabinacrabic/rexglue-sdk-RED-Edition-LAVA/blob/rov-research/docs/accurate-edram-vulkan.md) (на английском).
+- **Плавный Vulkan — готово.** Оверлеи заставляли SDK перерисовывать экран 100–180 раз в секунду; с вертикальной синхронизацией Vulkan на загруженной видеокарте это делало 30 кадров игры неровными (33 мс ± до 23 мс, часть кадров не показывалась). Теперь экран перерисовывается один раз на кадр игры: 33,3 мс ± 1 мс в обоих режимах.
+- **Честный «Точный» режим — готово.** Лаунчер предупреждает, если на этом ПК «Точный» работать не сможет (нет Vulkan или у видеокарты нет fragment shader interlock), а `F2` показывает режим, который работает на самом деле.
+- **Дальше для «Точного»:** те же ускорения для Direct3D 12; очень ждём отчётов с видеокарт NVIDIA и Intel (откройте issue с моделью видеокарты и FPS).
 - **VP Tools** — внутриигровое меню разработчика (`F1` или зажать Back): создание пиньят, поиск значений в памяти, трассировка движка, статистика GPU. Следующий шаг — редактирование монет и опыта, потом — основа для модов.
 - **Вылет на титульном экране** (журнал вылета уже пишется в `logs\vp_crash.txt`).
 
@@ -159,7 +170,7 @@
 
 ## Благодарности
 
-- [ReXGlue SDK](https://github.com/rexglue/rexglue-sdk): рекомпилятор и среда выполнения ([наш форк](https://github.com/crabinacrabic/rexglue-sdk/tree/rov-research) с изменениями «Точного» режима)
+- [ReXGlue SDK](https://github.com/rexglue/rexglue-sdk): рекомпилятор и среда выполнения ([наш форк](https://github.com/crabinacrabic/rexglue-sdk-RED-Edition-LAVA/tree/rov-research) с изменениями «Точного» режима)
 - [Xenia](https://github.com/xenia-project/xenia) и [Xenia Canary](https://github.com/xenia-canary/xenia-canary): графический бэкенд и эталон для сравнения
 - [TiP-Recomp](https://github.com/SolarCookies/TiP-Recomp) (SolarCookies): образец архитектуры и имена функций движка (Viva Piñata: Trouble in Paradise), используются с разрешения автора
 - ZoG Team ([Zone of Games](https://www.zoneofgames.ru/)): русский перевод ПК-версии
