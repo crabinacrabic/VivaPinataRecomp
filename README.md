@@ -10,9 +10,9 @@
 
 [![Platform](https://img.shields.io/badge/platform-Windows%20x64-0078D6?logo=windows&logoColor=white)](#what-you-need)
 [![Title ID](https://img.shields.io/badge/Title%20ID-4D5307F2-107C10?logo=xbox&logoColor=white)](#which-game-version-you-need)
-[![ReXGlue SDK](https://img.shields.io/badge/ReXGlue%20SDK-v0.10.0.24%20(fork)-8A2BE2)](https://github.com/crabinacrabic/rexglue-sdk/tree/rov-research)
+[![ReXGlue SDK](https://img.shields.io/badge/ReXGlue%20SDK-v0.10.0.24%20(fork)-8A2BE2)](https://github.com/crabinacrabic/rexglue-sdk-RED-Edition-LAVA/tree/rov-research)
 [![Renderer](https://img.shields.io/badge/render-Direct3D%2012-blue)](#settings)
-[![RED Edition Vulkan](https://img.shields.io/badge/RED%20Edition-Vulkan-ED1C24)](#red-edition-vulkan)
+[![RED Edition LAVA](https://img.shields.io/badge/RED%20Edition-LAVA-ED1C24)](#red-edition-lava)
 [![Status](https://img.shields.io/badge/status-playable-2ea44f)](#what-works)
 [![Languages](https://img.shields.io/badge/text-English%20%7C%20Русский-orange)](#russian-language)
 
@@ -29,11 +29,11 @@ The original Xbox 360 game, converted into a normal Windows program. It is **not
 > [!IMPORTANT]
 > **No game files are included.** You need your own copy of the game, and it must be one specific version (see below).
 
-## RED Edition Vulkan
+## RED Edition LAVA
 
-<p align="center"><img src="docs/images/red-edition-vulkan/logo.png" width="560" alt="RED Edition Vulkan logo: a red volcano over the glowing mantle"></p>
+<p align="center"><img src="docs/images/red-edition-lava/logo.png" width="560" alt="RED Edition LAVA logo: molten lava under a cracked crust"></p>
 
-**RED Edition Vulkan** is the name of our work on the launcher's **Accurate** mode: the Xbox 360 video memory (EDRAM) emulated exactly on Vulkan with fragment shader interlock, and made fast enough on AMD Radeon to hold the game's 30 FPS (RX 6600). It lives in [our fork of ReXGlue SDK](https://github.com/crabinacrabic/rexglue-sdk/tree/rov-research), so other ReXGlue games can use it too. Red is for Radeon, the GPU it was tuned on; the volcano and its mantle are for Vulkan, which grew out of AMD's Mantle.
+**RED Edition LAVA** is the name of our work on the launcher's **Accurate** mode: the Xbox 360 video memory (EDRAM) emulated exactly on Vulkan with fragment shader interlock, and made fast enough on AMD Radeon to hold the game's 30 FPS (RX 6600). It lives in [our fork of ReXGlue SDK](https://github.com/crabinacrabic/rexglue-sdk-RED-Edition-LAVA/tree/rov-research), so other ReXGlue games can use it too. Red is for Radeon, the GPU it was tuned on; lava is what a volcano brings up from the mantle, a nod to Vulkan, which grew out of AMD's Mantle.
 
 <sub>A community project, not affiliated with AMD or the Khronos Group. Vulkan is a registered trademark of the Khronos Group Inc.; Radeon is a trademark of Advanced Micro Devices, Inc.</sub>
 
@@ -144,7 +144,7 @@ The whole game has not been played through from start to finish yet. If somethin
 
 ## What we're working on
 
-- **Accurate mode at full speed: done.** AMD drivers made the GPU wait for each pixel's turn, and that waiting took most of the time. Our build of ReXGlue shortens that wait and stops the CPU from waiting for the GPU, without changing the result: the emulated video memory is identical to the original code (one intermediate pass differs by ±1 in about 100 pixels). Accurate went from 13–15 to a steady 30 FPS on an RX 6600. How it works, with the measurements: [research notes](https://github.com/crabinacrabic/rexglue-sdk/blob/rov-research/docs/accurate-edram-vulkan.md).
+- **Accurate mode at full speed: done.** AMD drivers made the GPU wait for each pixel's turn, and that waiting took most of the time. Our build of ReXGlue shortens that wait and stops the CPU from waiting for the GPU, without changing the result: the emulated video memory is identical to the original code (one intermediate pass differs by ±1 in about 100 pixels). Accurate went from 13–15 to a steady 30 FPS on an RX 6600. How it works, with the measurements: [research notes](https://github.com/crabinacrabic/rexglue-sdk-RED-Edition-LAVA/blob/rov-research/docs/accurate-edram-vulkan.md).
 - **Smoother Vulkan: done.** The overlays kept asking the SDK to redraw the screen 100–180 times per second; with Vulkan's vertical sync on a busy GPU that made the game's 30 frames uneven (33 ms ± up to 23 ms, some frames never shown). Now the screen is redrawn once per game frame: 33.3 ms ± 1 ms in both modes.
 - **Honest Accurate mode: done.** The launcher warns when this PC can't run Accurate (no Vulkan, or no fragment shader interlock on the GPU), and `F2` shows the mode that really runs.
 - **Next for Accurate:** the same speedups for Direct3D 12; reports from NVIDIA and Intel GPUs are very welcome (open an issue with your GPU and FPS).
@@ -170,7 +170,7 @@ How the project is organised, the development rules and the important fixes: [AG
 
 ## Credits
 
-- [ReXGlue SDK](https://github.com/rexglue/rexglue-sdk): recompiler and runtime ([our fork](https://github.com/crabinacrabic/rexglue-sdk/tree/rov-research) with the Accurate mode changes)
+- [ReXGlue SDK](https://github.com/rexglue/rexglue-sdk): recompiler and runtime ([our fork](https://github.com/crabinacrabic/rexglue-sdk-RED-Edition-LAVA/tree/rov-research) with the Accurate mode changes)
 - [Xenia](https://github.com/xenia-project/xenia) and [Xenia Canary](https://github.com/xenia-canary/xenia-canary): graphics backend, and the reference used for comparison
 - [TiP-Recomp](https://github.com/SolarCookies/TiP-Recomp) (SolarCookies): project architecture reference and engine function names (Viva Piñata: Trouble in Paradise), used with the author's permission
 - ZoG Team ([Zone of Games](https://www.zoneofgames.ru/)): the Russian translation of the PC version

@@ -1,0 +1,137 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1240 520" width="1240" height="520">
+  <title>RED Edition LAVA</title>
+  <!-- Molten lava under a cracked crust, and the name. Original artwork for this project,
+       not affiliated with AMD or the Khronos Group. -->
+  <defs>
+    <clipPath id="card"><rect x="10" y="10" width="1220" height="500" rx="44"/></clipPath>
+    <linearGradient id="rock" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0" stop-color="#120605"/>
+      <stop offset="0.55" stop-color="#1c0806"/>
+      <stop offset="1" stop-color="#3d0e05"/>
+    </linearGradient>
+    <radialGradient id="calm" cx="620" cy="245" r="440" gradientUnits="userSpaceOnUse"
+                    gradientTransform="matrix(1 0 0 0.45 0 134.75)">
+      <stop offset="0" stop-color="#0a0302" stop-opacity="0.85"/>
+      <stop offset="1" stop-color="#0a0302" stop-opacity="0"/>
+    </radialGradient>
+    <linearGradient id="fade" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0" stop-color="#fff" stop-opacity="0.22"/>
+      <stop offset="0.5" stop-color="#fff" stop-opacity="0.5"/>
+      <stop offset="1" stop-color="#fff"/>
+    </linearGradient>
+    <mask id="veinMask" maskUnits="userSpaceOnUse" x="0" y="0" width="1240" height="520">
+      <rect width="1240" height="520" fill="url(#fade)"/>
+    </mask>
+    <!-- Glowing cracks: the creases of turbulence noise, coloured from dark red to white-hot. -->
+    <filter id="veins" x="0" y="0" width="100%" height="100%" color-interpolation-filters="sRGB">
+      <feTurbulence type="turbulence" baseFrequency="0.0055 0.011" numOctaves="3" seed="23" result="n"/>
+      <feColorMatrix in="n" type="matrix" values="1 0 0 0 0  1 0 0 0 0  1 0 0 0 0  0 0 0 0 1" result="g"/>
+      <feComponentTransfer in="g" result="c">
+        <feFuncR type="table" tableValues="1 0.5 0.14 0 0 0 0 0 0 0 0 0 0 0 0 0"/>
+        <feFuncG type="table" tableValues="1 0.5 0.14 0 0 0 0 0 0 0 0 0 0 0 0 0"/>
+        <feFuncB type="table" tableValues="1 0.5 0.14 0 0 0 0 0 0 0 0 0 0 0 0 0"/>
+      </feComponentTransfer>
+      <feComponentTransfer in="c" result="hot">
+        <feFuncR type="table" tableValues="0 0.62 1 1 1"/>
+        <feFuncG type="table" tableValues="0 0.07 0.34 0.68 0.95"/>
+        <feFuncB type="table" tableValues="0 0.02 0.04 0.16 0.68"/>
+      </feComponentTransfer>
+      <feColorMatrix in="c" type="matrix" values="0 0 0 0 0  0 0 0 0 0  0 0 0 0 0  1.7 0 0 0 0" result="a"/>
+      <feComposite in="hot" in2="a" operator="in" result="core"/>
+      <feGaussianBlur in="core" stdDeviation="4" result="g1"/>
+      <feGaussianBlur in="core" stdDeviation="13" result="g2"/>
+      <feMerge><feMergeNode in="g2"/><feMergeNode in="g1"/><feMergeNode in="core"/></feMerge>
+    </filter>
+    <filter id="grain" x="0" y="0" width="100%" height="100%">
+      <feTurbulence type="fractalNoise" baseFrequency="0.85" numOctaves="2" seed="5"/>
+      <feColorMatrix type="matrix" values="0 0 0 0 0.42  0 0 0 0 0.2  0 0 0 0 0.12  0 0 0 -0.9 0.55"/>
+    </filter>
+    <!-- Cooling crust plates; the lava shows through the seams. -->
+    <filter id="plates" x="0" y="0" width="100%" height="100%">
+      <feTurbulence type="turbulence" baseFrequency="0.018 0.045" numOctaves="2" seed="4"/>
+      <feColorMatrix type="matrix" values="0 0 0 0 0.17  0 0 0 0 0.035  0 0 0 0 0.02  3.2 0 0 0 -0.32"/>
+    </filter>
+    <filter id="plates2" x="0" y="0" width="100%" height="100%">
+      <feTurbulence type="turbulence" baseFrequency="0.022 0.03" numOctaves="2" seed="31"/>
+      <feColorMatrix type="matrix" values="0 0 0 0 0.2  0 0 0 0 0.04  0 0 0 0 0.02  3.4 0 0 0 -0.36"/>
+    </filter>
+    <filter id="wobble" x="-5%" y="-40%" width="110%" height="180%">
+      <feTurbulence type="fractalNoise" baseFrequency="0.01 0.035" numOctaves="2" seed="9" result="w"/>
+      <feDisplacementMap in="SourceGraphic" in2="w" scale="22" xChannelSelector="R" yChannelSelector="G"/>
+    </filter>
+    <filter id="halo" x="-30%" y="-60%" width="160%" height="220%"><feGaussianBlur stdDeviation="18"/></filter>
+    <filter id="soft" x="-20%" y="-60%" width="140%" height="220%"><feGaussianBlur stdDeviation="14"/></filter>
+    <filter id="ember" x="-300%" y="-300%" width="700%" height="700%">
+      <feGaussianBlur stdDeviation="2.2" result="b"/>
+      <feMerge><feMergeNode in="b"/><feMergeNode in="SourceGraphic"/></feMerge>
+    </filter>
+    <linearGradient id="river" x1="0" y1="412" x2="0" y2="514" gradientUnits="userSpaceOnUse">
+      <stop offset="0" stop-color="#fff6c8"/>
+      <stop offset="0.1" stop-color="#ffd24a"/>
+      <stop offset="0.32" stop-color="#ff8c17"/>
+      <stop offset="0.62" stop-color="#f0420c"/>
+      <stop offset="1" stop-color="#a1130a"/>
+    </linearGradient>
+    <linearGradient id="heat" x1="0" y1="300" x2="0" y2="520" gradientUnits="userSpaceOnUse">
+      <stop offset="0" stop-color="#ff5a12" stop-opacity="0"/>
+      <stop offset="1" stop-color="#ff5a12" stop-opacity="0.38"/>
+    </linearGradient>
+    <linearGradient id="molten" x1="0" y1="170" x2="0" y2="332" gradientUnits="userSpaceOnUse">
+      <stop offset="0" stop-color="#fff8d6"/>
+      <stop offset="0.22" stop-color="#ffd85a"/>
+      <stop offset="0.52" stop-color="#ff9220"/>
+      <stop offset="0.8" stop-color="#f1420e"/>
+      <stop offset="1" stop-color="#b8180a"/>
+    </linearGradient>
+    <linearGradient id="rim" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0" stop-color="#ff8a2a"/>
+      <stop offset="0.5" stop-color="#b3200b"/>
+      <stop offset="1" stop-color="#ff6a1a"/>
+    </linearGradient>
+    <path id="flow" d="M10 440 C 130 420 250 456 392 436 S 650 414 796 438 S 1062 458 1230 428 L 1230 520 L 10 520 Z"/>
+    <text id="lw" x="631" y="328" text-anchor="middle" font-family="'Segoe UI Black', 'Arial Black', 'Segoe UI', sans-serif"
+          font-weight="900" font-size="214" letter-spacing="22">LAVA</text>
+    <clipPath id="lwClip"><use href="#lw"/></clipPath>
+    <clipPath id="flowClip"><use href="#flow"/></clipPath>
+  </defs>
+
+  <g clip-path="url(#card)">
+    <rect width="1240" height="520" fill="url(#rock)"/>
+    <rect width="1240" height="520" filter="url(#grain)"/>
+    <rect width="1240" height="520" filter="url(#veins)" mask="url(#veinMask)"/>
+    <rect width="1240" height="520" fill="url(#calm)"/>
+    <rect y="300" width="1240" height="220" fill="url(#heat)"/>
+    <use href="#flow" fill="#ff5a14" filter="url(#soft)" opacity="0.9"/>
+    <g filter="url(#wobble)">
+      <use href="#flow" fill="url(#river)"/>
+      <g clip-path="url(#flowClip)" opacity="0.55"><rect y="400" width="1240" height="120" filter="url(#plates)"/></g>
+    </g>
+    <g fill="#ffb24a" filter="url(#ember)">
+      <circle cx="60" cy="330" r="1.4" opacity="0.5"/>
+      <circle cx="118" cy="384" r="2.6" opacity="0.9"/>
+      <circle cx="206" cy="346" r="1.8" opacity="0.7"/>
+      <circle cx="316" cy="398" r="2.3" opacity="0.85"/>
+      <circle cx="468" cy="372" r="2.8" opacity="0.8"/>
+      <circle cx="588" cy="404" r="1.7" opacity="0.75"/>
+      <circle cx="762" cy="390" r="2.4" opacity="0.85"/>
+      <circle cx="846" cy="352" r="1.8" opacity="0.65"/>
+      <circle cx="934" cy="404" r="2.6" opacity="0.9"/>
+      <circle cx="1012" cy="332" r="1.9" opacity="0.6"/>
+      <circle cx="1092" cy="386" r="2.3" opacity="0.8"/>
+      <circle cx="1158" cy="350" r="1.6" opacity="0.6"/>
+      <circle cx="1190" cy="408" r="2.4" opacity="0.85"/>
+    </g>
+  </g>
+
+  <use href="#lw" fill="#ff4510" filter="url(#halo)" opacity="0.8"/>
+  <use href="#lw" fill="none" stroke="#2a0603" stroke-width="12" stroke-linejoin="round"/>
+  <use href="#lw" fill="url(#molten)"/>
+  <g clip-path="url(#lwClip)" opacity="0.4"><rect x="180" y="140" width="900" height="210" filter="url(#plates2)"/></g>
+
+  <text x="628" y="122" text-anchor="middle" font-family="'Segoe UI', Arial, sans-serif" font-weight="700" font-size="44"
+        letter-spacing="16" stroke="#160403" stroke-width="6" stroke-linejoin="round" paint-order="stroke"><tspan fill="#ff3b22">RED</tspan> <tspan fill="#ffe8d4">EDITION</tspan></text>
+  <text x="624" y="382" text-anchor="middle" font-family="'Segoe UI', Arial, sans-serif" font-weight="600" font-size="25"
+        letter-spacing="8" fill="#ffd3b4" stroke="#160403" stroke-width="5" stroke-linejoin="round" paint-order="stroke">EXACT EDRAM · VULKAN FSI</text>
+
+  <rect x="11.5" y="11.5" width="1217" height="497" rx="43" fill="none" stroke="url(#rim)" stroke-width="3" opacity="0.85"/>
+</svg>

@@ -1,0 +1,91 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 440 440" width="440" height="440">
+  <title>RED Edition LAVA</title>
+  <!-- A drop of molten lava over a cracked crust. Original artwork for this project,
+       not affiliated with AMD or the Khronos Group. -->
+  <defs>
+    <clipPath id="card"><rect x="8" y="8" width="424" height="424" rx="92"/></clipPath>
+    <linearGradient id="rock" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0" stop-color="#120605"/>
+      <stop offset="0.55" stop-color="#1c0806"/>
+      <stop offset="1" stop-color="#3d0e05"/>
+    </linearGradient>
+    <linearGradient id="fade" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0" stop-color="#fff" stop-opacity="0.3"/>
+      <stop offset="1" stop-color="#fff"/>
+    </linearGradient>
+    <mask id="veinMask" maskUnits="userSpaceOnUse" x="0" y="0" width="440" height="440">
+      <rect width="440" height="440" fill="url(#fade)"/>
+    </mask>
+    <filter id="veins" x="0" y="0" width="100%" height="100%" color-interpolation-filters="sRGB">
+      <feTurbulence type="turbulence" baseFrequency="0.009 0.016" numOctaves="3" seed="23" result="n"/>
+      <feColorMatrix in="n" type="matrix" values="1 0 0 0 0  1 0 0 0 0  1 0 0 0 0  0 0 0 0 1" result="g"/>
+      <feComponentTransfer in="g" result="c">
+        <feFuncR type="table" tableValues="1 0.5 0.14 0 0 0 0 0 0 0 0 0 0 0 0 0"/>
+        <feFuncG type="table" tableValues="1 0.5 0.14 0 0 0 0 0 0 0 0 0 0 0 0 0"/>
+        <feFuncB type="table" tableValues="1 0.5 0.14 0 0 0 0 0 0 0 0 0 0 0 0 0"/>
+      </feComponentTransfer>
+      <feComponentTransfer in="c" result="hot">
+        <feFuncR type="table" tableValues="0 0.62 1 1 1"/>
+        <feFuncG type="table" tableValues="0 0.07 0.34 0.68 0.95"/>
+        <feFuncB type="table" tableValues="0 0.02 0.04 0.16 0.68"/>
+      </feComponentTransfer>
+      <feColorMatrix in="c" type="matrix" values="0 0 0 0 0  0 0 0 0 0  0 0 0 0 0  1.7 0 0 0 0" result="a"/>
+      <feComposite in="hot" in2="a" operator="in" result="core"/>
+      <feGaussianBlur in="core" stdDeviation="3" result="g1"/>
+      <feGaussianBlur in="core" stdDeviation="10" result="g2"/>
+      <feMerge><feMergeNode in="g2"/><feMergeNode in="g1"/><feMergeNode in="core"/></feMerge>
+    </filter>
+    <filter id="grain" x="0" y="0" width="100%" height="100%">
+      <feTurbulence type="fractalNoise" baseFrequency="0.85" numOctaves="2" seed="5"/>
+      <feColorMatrix type="matrix" values="0 0 0 0 0.42  0 0 0 0 0.2  0 0 0 0 0.12  0 0 0 -0.9 0.55"/>
+    </filter>
+    <filter id="plates" x="0" y="0" width="100%" height="100%">
+      <feTurbulence type="turbulence" baseFrequency="0.03 0.05" numOctaves="2" seed="31"/>
+      <feColorMatrix type="matrix" values="0 0 0 0 0.2  0 0 0 0 0.04  0 0 0 0 0.02  3.4 0 0 0 -0.36"/>
+    </filter>
+    <filter id="halo" x="-40%" y="-40%" width="180%" height="180%"><feGaussianBlur stdDeviation="20"/></filter>
+    <filter id="blur" x="-50%" y="-50%" width="200%" height="200%"><feGaussianBlur stdDeviation="5"/></filter>
+    <filter id="ember" x="-300%" y="-300%" width="700%" height="700%">
+      <feGaussianBlur stdDeviation="2" result="b"/>
+      <feMerge><feMergeNode in="b"/><feMergeNode in="SourceGraphic"/></feMerge>
+    </filter>
+    <linearGradient id="heat" x1="0" y1="260" x2="0" y2="440" gradientUnits="userSpaceOnUse">
+      <stop offset="0" stop-color="#ff5a12" stop-opacity="0"/>
+      <stop offset="1" stop-color="#ff5a12" stop-opacity="0.4"/>
+    </linearGradient>
+    <radialGradient id="core" cx="0.42" cy="0.66" r="0.62">
+      <stop offset="0" stop-color="#fff8d6"/>
+      <stop offset="0.2" stop-color="#ffd85a"/>
+      <stop offset="0.48" stop-color="#ff8c18"/>
+      <stop offset="0.78" stop-color="#eb3a0c"/>
+      <stop offset="1" stop-color="#9c1209"/>
+    </radialGradient>
+    <linearGradient id="rim" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0" stop-color="#ff8a2a"/>
+      <stop offset="0.5" stop-color="#b3200b"/>
+      <stop offset="1" stop-color="#ff6a1a"/>
+    </linearGradient>
+    <path id="drop" d="M220 64 C 248 122 330 200 330 268 A 110 110 0 1 1 110 268 C 110 200 192 122 220 64 Z"/>
+    <clipPath id="dropClip"><use href="#drop"/></clipPath>
+  </defs>
+
+  <g clip-path="url(#card)">
+    <rect width="440" height="440" fill="url(#rock)"/>
+    <rect width="440" height="440" filter="url(#grain)"/>
+    <rect width="440" height="440" filter="url(#veins)" mask="url(#veinMask)"/>
+    <rect y="260" width="440" height="180" fill="url(#heat)"/>
+    <g fill="#ffb24a" filter="url(#ember)">
+      <circle cx="84" cy="352" r="2.2" opacity="0.85"/>
+      <circle cx="122" cy="300" r="1.5" opacity="0.6"/>
+      <circle cx="356" cy="330" r="2.4" opacity="0.85"/>
+      <circle cx="330" cy="394" r="1.7" opacity="0.7"/>
+    </g>
+  </g>
+
+  <use href="#drop" fill="#ff4a10" filter="url(#halo)" opacity="0.9"/>
+  <use href="#drop" fill="url(#core)" stroke="#2a0603" stroke-width="8" paint-order="stroke"/>
+  <g clip-path="url(#dropClip)" opacity="0.4"><rect x="100" y="60" width="240" height="330" filter="url(#plates)"/></g>
+  <ellipse cx="180" cy="238" rx="22" ry="44" transform="rotate(-24 180 238)" fill="#fffbe8" opacity="0.35" filter="url(#blur)"/>
+
+  <rect x="9.5" y="9.5" width="421" height="421" rx="90.5" fill="none" stroke="url(#rim)" stroke-width="3" opacity="0.85"/>
+</svg>
