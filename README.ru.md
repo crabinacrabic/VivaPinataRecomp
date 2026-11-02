@@ -10,7 +10,7 @@
 
 [![Platform](https://img.shields.io/badge/platform-Windows%20x64-0078D6?logo=windows&logoColor=white)](#что-нужно)
 [![Title ID](https://img.shields.io/badge/Title%20ID-4D5307F2-107C10?logo=xbox&logoColor=white)](#какая-версия-игры-нужна)
-[![ReXGlue SDK](https://img.shields.io/badge/ReXGlue%20SDK-v0.10.0.24%20(fork)-8A2BE2)](https://github.com/crabinacrabic/rexglue-sdk-RED-Edition-LAVA/tree/rov-research)
+[![ReXGlue SDK](https://img.shields.io/badge/ReXGlue%20SDK-v0.10.0.30%20(fork)-8A2BE2)](https://github.com/crabinacrabic/rexglue-sdk-RED-Edition-LAVA/tree/rov-research)
 [![Renderer](https://img.shields.io/badge/render-Direct3D%2012-blue)](#настройки)
 [![RED Edition LAVA](https://img.shields.io/badge/RED%20Edition-LAVA-ED1C24)](#red-edition-lava)
 [![Status](https://img.shields.io/badge/status-playable-2ea44f)](#что-работает)

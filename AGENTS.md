@@ -59,7 +59,7 @@ Test-Path C:\Games\VivaPinataRecomp\game_files\Beta\bundles\englishus.bnl   # ex
 
 ### 1.5 Build
 
-On the first configure, CMake downloads ReXGlue SDK `0.10.0.24-dev.g717fbdf` into `rexglue\win-amd64\` (`cmake/fetch-rexglue-sdk.cmake`, the GitHub release `accurate-edram-20261016-717fbdf` of the fork [crabinacrabic/rexglue-sdk-RED-Edition-LAVA](https://github.com/crabinacrabic/rexglue-sdk-RED-Edition-LAVA), branch `rov-research`: upstream ReXGlue plus the Accurate mode changes). If `rexglue\win-amd64\` holds another version, it is moved to `rexglue\win-amd64.old-<version>-<time>\` and the pinned one is downloaded; the old folder can be deleted. Then it runs `rexglue codegen vivapinata_manifest.toml` once, which writes `generated\default\`. The first build compiles about 100 generated C++ files. Expect 10–40 minutes in total.
+On the first configure, CMake downloads ReXGlue SDK `0.10.0.30-dev.g8fdf638` into `rexglue\win-amd64\` (`cmake/fetch-rexglue-sdk.cmake`, the GitHub release `red-edition-lava-20261102-8fdf638` of the fork [crabinacrabic/rexglue-sdk-RED-Edition-LAVA](https://github.com/crabinacrabic/rexglue-sdk-RED-Edition-LAVA), branch `rov-research`: upstream ReXGlue plus the Accurate mode changes). If `rexglue\win-amd64\` holds another version, it is moved to `rexglue\win-amd64.old-<version>-<time>\` and the pinned one is downloaded; the old folder can be deleted. Then it runs `rexglue codegen vivapinata_manifest.toml` once, which writes `generated\default\`. The first build compiles about 100 generated C++ files. Expect 10–40 minutes in total.
 
 **A. Visual Studio (tested; ask the user to do this):**
 1. Open Visual Studio 2026 → **File → Open → Folder…** → `C:\Games\VivaPinataRecomp`.
