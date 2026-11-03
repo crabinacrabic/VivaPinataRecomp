@@ -136,6 +136,7 @@ Tested on Windows 11 with an AMD Radeon RX 6600.
 | ✅ | Performance overlay on `F2`: game ticks per second, the worst frame, how evenly frames reach the screen, CPU, GPU, video memory, RAM and the render mode as it really runs |
 | ✅ | Russian text (ZoG Team translation) |
 | ✅ | **Accurate** graphics mode: the Xbox 360 video memory (EDRAM) emulated exactly, on Vulkan. 30 FPS on an RX 6600 |
+| ⚠️ | Short stutters the first time a scene appears, while the GPU compiles its shaders. The shaders are saved, so each stutter happens only once |
 | ⚠️ | A rare crash after about a minute of idling on the title screen. Pressing START before that avoids it |
 | ✅ | Direct3D 12 (Fast) and Vulkan (Accurate) |
 | 🚧 | No frame rates above 30 FPS; intro videos can't be skipped |
@@ -144,12 +145,21 @@ The whole game has not been played through from start to finish yet. If somethin
 
 ## What we're working on
 
-- **Accurate mode at full speed: done.** AMD drivers made the GPU wait for each pixel's turn, and that waiting took most of the time. Our build of ReXGlue shortens that wait and stops the CPU from waiting for the GPU, without changing the result: the emulated video memory is identical to the original code (one intermediate pass differs by ±1 in about 100 pixels). Accurate went from 13–15 to a steady 30 FPS on an RX 6600. How it works, with the measurements: [research notes](https://github.com/crabinacrabic/rexglue-sdk-RED-Edition-LAVA/blob/rov-research/docs/accurate-edram-vulkan.md).
-- **Smoother Vulkan: done.** The overlays kept asking the SDK to redraw the screen 100–180 times per second; with Vulkan's vertical sync on a busy GPU that made the game's 30 frames uneven (33 ms ± up to 23 ms, some frames never shown). Now the screen is redrawn once per game frame: 33.3 ms ± 1 ms in both modes.
-- **Honest Accurate mode: done.** The launcher warns when this PC can't run Accurate (no Vulkan, or no fragment shader interlock on the GPU), and `F2` shows the mode that really runs.
-- **Next for Accurate:** the same speedups for Direct3D 12; reports from NVIDIA and Intel GPUs are very welcome (open an issue with your GPU and FPS).
-- **VP Tools**, an in-game developer menu (`F1` or hold Back): spawning piñatas, a value scanner, engine traces and GPU statistics. Next: editing coins and experience. Later: a base for mods.
-- **The title screen crash** (a crash log is already written to `logs\vp_crash.txt`).
+Done:
+
+- **Accurate mode at full speed.** AMD drivers made the GPU wait for each pixel's turn, and that waiting took most of the time. Our build of ReXGlue shortens that wait and stops the CPU from waiting for the GPU, without changing the result: the emulated video memory is identical to the original code (one intermediate pass differs by ±1 in about 100 pixels). Accurate went from 13–15 to a steady 30 FPS on an RX 6600. How it works, with the measurements: [research notes](https://github.com/crabinacrabic/rexglue-sdk-RED-Edition-LAVA/blob/rov-research/docs/accurate-edram-vulkan.md).
+- **Smoother Vulkan.** The overlays kept asking the SDK to redraw the screen 100–180 times per second; with Vulkan's vertical sync on a busy GPU that made the game's 30 frames uneven (33 ms ± up to 23 ms, some frames never shown). Now the screen is redrawn once per game frame: 33.3 ms ± 1 ms in both modes.
+- **Honest Accurate mode.** The launcher warns when this PC can't run Accurate (no Vulkan, or no fragment shader interlock on the GPU), and `F2` shows the mode that really runs.
+
+Next, in this order:
+
+1. **No shader stutter on the first run.** The first time a scene appears, the GPU compiles its shaders and the game stutters for a moment. Later runs don't stutter there: the shaders are saved and prepared at startup in a few seconds. Plan: compile shaders in the background before the game needs them, the way other recomps do, so that the first run is smooth too.
+2. **A short hitch about 10 seconds after the start**, in both modes: find the cause.
+3. **The ±1 difference in Accurate:** find the shader that makes one intermediate pass differ by ±1 in about 100 pixels, and why.
+4. **The same speedups for Direct3D 12**, starting with the lazy readback.
+5. **More GPUs:** Accurate is tested only on an AMD RX 6600. Reports from NVIDIA and Intel GPUs are very welcome (open an issue with your GPU and FPS).
+6. **VP Tools**, an in-game developer menu (`F1` or hold Back): spawning piñatas, a value scanner, engine traces and GPU statistics. Next: editing coins and experience. Later: a base for mods.
+7. **The title screen crash** (a crash log is already written to `logs\vp_crash.txt`).
 
 ## If something goes wrong
 
