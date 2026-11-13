@@ -26,6 +26,7 @@
 #include "game_cvars.h"
 #include "game_timing.h"
 #include "launcher.h"
+#include "shader_seed/shader_seed.h"
 #include "utils.h"
 #include "vp_tools/crash_log.h"
 #include "vp_tools/perf_overlay.h"
@@ -226,6 +227,27 @@ public:
     }
   }
 
+  // Runs right before the SDK opens its shader storage (ReXApp::LaunchModule).
+  // The storage is filled from the player's own game files here, so a first
+  // run starts with the shaders and pipelines of a later one
+  // (src/shader_seed/shader_seed.h).
+  void OnPreLaunchModule() override
+  {
+    const uint8_t *guest = runtime()->virtual_membase();
+    const uint32_t image_base = PPCImageConfig.image_base;
+    const uint32_t image_size = PPCImageConfig.image_size;
+    if (const std::string dump = REXCVAR_GET(vp_dev_dump_image); !dump.empty())
+    {
+      const bool saved = vp_shader_seed::DumpImage(dump, guest, image_base, image_size);
+      REXLOG_INFO("[shader seed] default.xex image dump: {}", saved ? "saved" : "FAILED");
+    }
+    if (REXCVAR_GET(vp_shader_seed))
+    {
+      vp_shader_seed::Apply(utils::RepoRoot() / "assets" / "shader_seed", runtime()->game_data_root(),
+                            runtime()->cache_root(), guest, image_base, image_size);
+    }
+  }
+
   void OnShutdown() override
   {
     launcher_.reset();
@@ -240,7 +262,6 @@ public:
   // Available for later phases:
   // void OnPostInitLogging() override {}
   // void OnLoadXexImage(std::string& xex_image) override {}   // default: game:\default.xex
-  // void OnPreLaunchModule() override {}                        // last chance to patch guest memory
   // void OnPostLaunchModule(rex::system::XThread* thread) override {}
   // std::unique_ptr<rex::ui::ImGuiDialog> CreateAchievementsOverlay() override;
   // std::unique_ptr<rex::ui::AchievementNotificationDialog> CreateAchievementNotificationDialog() override;

@@ -1,0 +1,3 @@
+# The shader seed is read byte for byte by src/shader_seed: keep it exactly as committed.
+assets/shader_seed/*.txt text eol=lf
+assets/shader_seed/*.xpso binary
