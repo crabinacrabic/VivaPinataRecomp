@@ -38,8 +38,22 @@ REXCVAR_DEFINE_STRING(vp_launcher_language, "auto", "UI", "Launcher language: au
 REXCVAR_DEFINE_STRING(vp_language, "en", "Gameplay", "Game text language: en, ru")
     .allowed({"en", "ru"});
 
+// src/shader_seed: right before the SDK opens its shader storage, add the
+// shaders and pipelines listed in assets/shader_seed, with the shader code cut
+// from the player's own game files, so a first run is as smooth as a later one.
+REXCVAR_DEFINE_BOOL(vp_shader_seed, true, "Performance",
+                    "Fill the shader storage from the game files before the first run "
+                    "(assets/shader_seed)");
+
 REXCVAR_DEFINE_BOOL(dev_debug_runtime, false, "Debug",
                     "Enable runtime debug tools (stub sweep, missing function scan)");
+
+// tools/make_shader_seed.py needs the loaded default.xex image: the shaders
+// that are not in the packages live in it. The file is game code: keep it
+// out of the repository.
+REXCVAR_DEFINE_STRING(vp_dev_dump_image, "", "Debug",
+                      "Save the loaded default.xex image to this file at start "
+                      "(for tools/make_shader_seed.py)");
 
 // src/vp_tools: in-game tools menu (F1, or hold Back on the controller).
 REXCVAR_DEFINE_BOOL(vp_tools, true, "Tools", "Enable the VP Tools menu (F1 / hold Back)");
