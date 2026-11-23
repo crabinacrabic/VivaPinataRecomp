@@ -10,7 +10,7 @@
 
 [![Platform](https://img.shields.io/badge/platform-Windows%20x64-0078D6?logo=windows&logoColor=white)](#what-you-need)
 [![Title ID](https://img.shields.io/badge/Title%20ID-4D5307F2-107C10?logo=xbox&logoColor=white)](#which-game-version-you-need)
-[![ReXGlue SDK](https://img.shields.io/badge/ReXGlue%20SDK-v0.10.0.30%20(fork)-8A2BE2)](https://github.com/crabinacrabic/rexglue-sdk-RED-Edition-LAVA/tree/rov-research)
+[![ReXGlue SDK](https://img.shields.io/badge/ReXGlue%20SDK-v0.10.0.31%20(fork)-8A2BE2)](https://github.com/crabinacrabic/rexglue-sdk-RED-Edition-LAVA/tree/rov-research)
 [![Renderer](https://img.shields.io/badge/render-Direct3D%2012-blue)](#settings)
 [![RED Edition LAVA](https://img.shields.io/badge/RED%20Edition-LAVA-ED1C24)](#red-edition-lava)
 [![Status](https://img.shields.io/badge/status-playable-2ea44f)](#what-works)
@@ -152,6 +152,7 @@ Done:
 - **Smoother Vulkan.** The overlays kept asking the SDK to redraw the screen 100–180 times per second; with Vulkan's vertical sync on a busy GPU that made the game's 30 frames uneven (33 ms ± up to 23 ms, some frames never shown). Now the screen is redrawn once per game frame: 33.3 ms ± 1 ms in both modes.
 - **Honest Accurate mode.** The launcher warns when this PC can't run Accurate (no Vulkan, or no fragment shader interlock on the GPU), and `F2` shows the mode that really runs.
 - **Shaders ready before the first run (Fast).** The first time a scene appeared, the game compiled its shaders (227 shaders and 249 pipelines in the first minute in the garden), and objects whose pipeline wasn't ready yet were not drawn. Now, before the game starts, it takes those shaders from your own game files and prepares them: the repository only says where each shader lies (no game code), and each one is checked by its hash. In the lab, the first run then compiled nothing while playing. The hitches in the first seconds after the garden loads stay with or without this (worst frame 0.3–0.8 s with it, 0.85 s without), so they are not shader compiling. How it works: [AGENTS.md](AGENTS.md), "Shader seed".
+- **Fixes for old data on the GPU.** A player with an NVIDIA RTX 5070 saw textures stretch, shop pictures swap and objects vanish after a while, until the world was loaded again ([issue #2](https://github.com/crabinacrabic/VivaPinataRecomp/issues/2)). Our build of ReXGlue lacked several fixes from upstream ReXGlue for the GPU drawing old data after the game changed it: vertex and index buffers rewritten in place, a texture written while it was loading, and Vulkan texture descriptors after a pipeline change. They are now in SDK `0.10.0.31`. We could not reproduce the problem on our PC, so the player's test will show whether it is gone.
 
 Next, in this order:
 
